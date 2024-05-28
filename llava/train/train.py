@@ -1087,13 +1087,14 @@ def train(attn_implementation=None):
     elif model_args.version == "v0.5":
         tokenizer.pad_token = tokenizer.unk_token
     else:
-        if tokenizer.pad_token is None:
-            rank0_print("Adding pad token as '<pad>'")
-            smart_tokenizer_and_embedding_resize(
-                special_tokens_dict=dict(pad_token="<pad>"),
-                tokenizer=tokenizer,
-                model=model,
-            )
+        tokenizer.pad_token = 128010 # <|reserved_special_token_5|>
+        # if tokenizer.pad_token is None:
+            # rank0_print("Adding pad token as '<pad>'")
+            # smart_tokenizer_and_embedding_resize(
+            #     special_tokens_dict=dict(pad_token="<pad>"),
+            #     tokenizer=tokenizer,
+            #     model=model,
+            # )
         if model_args.version in conversation_lib.conv_templates:
             conversation_lib.default_conversation = conversation_lib.conv_templates[
                 model_args.version]

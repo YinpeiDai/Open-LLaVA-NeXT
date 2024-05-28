@@ -405,4 +405,9 @@ conv_templates = {
 
 
 if __name__ == "__main__":
-    print(default_conversation.get_prompt())
+    # print(default_conversation.get_prompt())
+    conv = conv_templates["llava_llama_3"].copy()
+    qs = '<image>\ndescribe the scene in the image'
+    conv.append_message(conv.roles[0], qs)
+    conv.append_message(conv.roles[1], "good.")
+    print(conv.get_prompt())
