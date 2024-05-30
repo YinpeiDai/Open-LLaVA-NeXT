@@ -483,6 +483,7 @@ def preprocess_llama3(
 
     # Mask targets # conv.sep = <|eot_id|>
     sep = conv.sep + conv.roles[1] # '<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n'
+    is_open_llava_next_llama3 = tokenizer.pad_token == "<pad>"
     for conversation, target in zip(conversations, targets):
         total_len = int(target.ne(tokenizer.pad_token_id).sum())
 
@@ -509,12 +510,13 @@ def preprocess_llama3(
                 round_len = len(tokenizer(rou).input_ids)
                 instruction_len = len(tokenizer(parts[0]).input_ids)
 
-            # if i > 0:
-            #     cur_len += 1
+            if is_open_llava_next_llama3 and i > 0:
+                round_len -= 1
+                instruction_len -= 1
 
             target[cur_len: cur_len + instruction_len] = IGNORE_INDEX
 
-            cur_len += round_len + 1
+            cur_len += round_len + 1 # add <|eot_id|>
         target[cur_len:] = IGNORE_INDEX
 
         if cur_len < tokenizer.model_max_length:
@@ -1086,15 +1088,16 @@ def train(attn_implementation=None):
     elif model_args.version == "v0.5":
         tokenizer.pad_token = tokenizer.unk_token
     else:
-        tokenizer.pad_token = "<|reserved_special_token_5|>"
-        tokenizer.pad_token_id = 128010
-        # if tokenizer.pad_token is None:
+        if tokenizer.pad_token is None:
             # rank0_print("Adding pad token as '<pad>'")
             # smart_tokenizer_and_embedding_resize(
             #     special_tokens_dict=dict(pad_token="<pad>"),
             #     tokenizer=tokenizer,
             #     model=model,
             # )
+            rank0_print("Adding pad token as <|reserved_special_token_5|>")
+            tokenizer.pad_token = "<|reserved_special_token_5|>"
+            tokenizer.pad_token_id = 128010
         if model_args.version in conversation_lib.conv_templates:
             conversation_lib.default_conversation = conversation_lib.conv_templates[
                 model_args.version]
