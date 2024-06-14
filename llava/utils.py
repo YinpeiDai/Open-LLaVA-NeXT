@@ -124,3 +124,25 @@ def pretty_print_semaphore(semaphore):
     if semaphore is None:
         return "None"
     return f"Semaphore(value={semaphore._value}, locked={semaphore.locked()})"
+
+
+RLBENCH_TASKS = [
+    "put_item_in_drawer",
+    "reach_and_drag",
+    "turn_tap",
+    "slide_block_to_color_target",
+    "open_drawer",
+    "put_groceries_in_cupboard",
+    "place_shape_in_shape_sorter",
+    "put_money_in_safe",
+    "push_buttons",
+    "close_jar",
+    "stack_blocks",
+    "place_cups",
+    "place_wine_at_rack_location",
+    "light_bulb_in",
+    "sweep_to_dustpan_of_size",
+    "insert_onto_square_peg",
+    "meat_off_grill",
+    "stack_cups",
+]

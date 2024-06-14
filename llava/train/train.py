@@ -51,7 +51,7 @@ IS_TOKENIZER_GREATER_THAN_0_14 = version.parse(
 @dataclass
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
-    version: Optional[str] = field(default="v0")
+    version: Optional[str] = field(default="v0")  # llava_llama_3_rvt, or llava_llama_3_rvt_<task_name>
     freeze_backbone: bool = field(default=False)
     tune_mm_mlp_adapter: bool = field(default=False)
     vision_tower: Optional[str] = field(default=None)

@@ -3,3 +3,5 @@ pretrained
 ref
 playground/
 __pycache__/
+checkpoints/
+sandbox/
