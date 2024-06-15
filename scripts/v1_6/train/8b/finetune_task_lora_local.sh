@@ -16,9 +16,9 @@ export BASE_LR=2e-5
 export VIT_LR=2e-6
 
 
-CUDA_VISIBLE_DEVICES=0,1 deepspeed --include=localhost:1 llava/train/train_mem.py \
+CUDA_VISIBLE_DEVICES=0,1 deepspeed llava/train/train_mem.py \
     --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
-    --deepspeed ./scripts/zero3.json \
+    --deepspeed ./scripts/zero2.json \
     --model_name_or_path /data/daiyp/foundation_models/llama3-llava-next-8b \
     --version llava_llama_3 \
     --data_path ./playground/data/llava_instruct_1k.json \

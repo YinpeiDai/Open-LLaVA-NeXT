@@ -57,46 +57,33 @@ class MyDataArguments(DataArguments):
 
 
 
-def merge_sentence(sentence, args):
-    # TODO: Jayjun should work on this
+def return_sentence(sentence, args):
+    TEMP_0_nolabel = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, what's the next instruction for the robot arm?"
+    TEMP_nolabel = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". {robot_delta_state} Based on the visual observation and the context, what's the next instruction for the robot arm?"
+    TEMP_0_label = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
+    TEMP_label = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". {robot_delta_state} Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
     if sentence["from"] == "human":
-        ret = []
-        ret.append(f"The task goal: {sentence['task_goal']}.")
-        if "previous_instruction" not in sentence:
-            ret.append(f"This is step 1.")
-        else:
-            ret.append(f"At previous step,  the robot arm is given the instruction: \"{sentence['previous_instruction']}\".")
-            robot_delta_state = sentence["robot_delta_state"]
-            state_list = []
-            if "position" in robot_delta_state and robot_delta_state["position"]:
-                state_list.append(robot_delta_state['position'])
-            if "rotation" in robot_delta_state and robot_delta_state["rotation"]:
-                state_list.append(robot_delta_state['rotation'])
-            if "gripper" in robot_delta_state and robot_delta_state["gripper"]:
-                state_list.append(robot_delta_state['gripper'])
-            if "collision" in robot_delta_state and robot_delta_state["collision"]:
-                state_list.append(f"and {robot_delta_state['collision']}.")
+        if "robot_delta_state" not in sentence: # first step
+            if args.predict_failure_label:
+                return TEMP_0_label.format(task_goal=sentence["task_goal"])
             else:
-                state_list.append(".")
-            state_str = ", ".join(state_list)
-            ret.append(f"After execution, the robot arm has {state_str}")
-        if args.predict_failure_label:
-            ret.append("<image>\nBased on the visual observation and the context, how's the robot complete the last instruction, and what's the next instruction for the robot arm?")
+                return TEMP_0_nolabel.format(task_goal=sentence["task_goal"])
         else:
-            ret.append("<image>\nBased on the visual observation and the context, what's the next instruction for the robot arm?")
-        return " ".join(ret)
+            if args.predict_failure_label:
+                return TEMP_label.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"], robot_delta_state=sentence["robot_delta_state"])
+            else:
+                return TEMP_nolabel.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"], robot_delta_state=sentence["robot_delta_state"])
     else:
-        ret = []
         if args.predict_failure_label:
-            ret.append(f"The robot makes a {sentence['label']} label for last instruction.")
-        if args.predict_heuristic:
-            ret.append(f"The next instruction is: {sentence['value-heuristic']}.")
+            if args.predict_heuristic:
+                return sentence["heuristic_instruction"]
+            else:
+                return sentence["gpt_instruction"]
         else:
-            ret.append(f"The next instruction is: {sentence['label']}.")
-        return " ".join(ret)
-
-
-
+            if args.predict_heuristic:
+                return sentence["heuristic_instruction_no_label"]
+            else:
+                return sentence["gpt_instruction_no_label"]
 
 def preprocess_llama3_rvt(
     sources,
@@ -124,7 +111,7 @@ def preprocess_llama3_rvt(
         for j, sentence in enumerate(source):
             role = roles[sentence["from"]]
             assert role == conv.roles[j % 2], f"{i}"
-            conv.append_message(role, merge_sentence(sentence, args))
+            conv.append_message(role, return_sentence(sentence, args))
         conversations.append(conv.get_prompt())
 
     # Tokenize conversations
@@ -220,15 +207,17 @@ class MyLazySupervisedDataset(Dataset):
             img_tokens = 128 if 'image' in sample else 0
             length_list.append(sum(len(conv['value'].split())
                                for conv in sample['conversations']) + img_tokens)
+            length_list.append(3200)
         return length_list
 
     @property
     def modality_lengths(self):
         length_list = []
         for sample in self.list_data_dict:
-            cur_len = sum(len(conv['value'].split())
-                          for conv in sample['conversations'])
-            cur_len = cur_len if 'image' in sample else -cur_len
+            # cur_len = sum(len(conv['value'].split())
+            #               for conv in sample['conversations'])
+            # cur_len = cur_len if 'image' in sample else -cur_len
+            cur_len = 3200
             length_list.append(cur_len)
         return length_list
 

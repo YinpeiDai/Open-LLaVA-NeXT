@@ -1,31 +1,31 @@
 #!/bin/bash
 
 
-#SBATCH --job-name=test-llava        # name
+#SBATCH --job-name=test-llava-rvt    # name
 #SBATCH --account=chaijy2
 #SBATCH --partition=spgpu
 #SBATCH --nodes=2                    # nodes
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --cpus-per-task=4            # number of cores per tasks
-#SBATCH --gres=gpu:3                 # number of gpus
-#SBATCH --mem-per-gpu=60G       
-#SBATCH --time=30:00:00              # maximum execution time (HH:MM:SS)
+#SBATCH --gres=gpu:4                 # number of gpus
+#SBATCH --mem-per-gpu=40G       
+#SBATCH --time=5-00:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.log      # output file name
 #SBATCH --mail-user=daiyp@umich.edu
 #SBATCH --mail-type=BEGIN,END
 
 
 
-export GPUS_PER_NODE=3
+export GPUS_PER_NODE=4
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
 export MASTER_PORT=9901
-EPOCH=2
+EPOCH=10
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
 
-export SAVE_PATH=llava-rvt-debug-ep${EPOCH}-originllava
-export MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
+export SAVE_PATH=llava_llama3_rvt_alltask_lora_debug_ep${EPOCH}
+export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b
 
 srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
 --nproc_per_node $GPUS_PER_NODE --nnodes $SLURM_NNODES --node_rank $SLURM_PROCID \
@@ -35,7 +35,7 @@ srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llava_llama_3_rvt \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/llava_close_jar_train_0.json \
+    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/rvt_llava_data/all_tasks.json \
     --image_folder /home/daiyp/Open-LLaVA-NeXT \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
@@ -53,12 +53,12 @@ srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
-    --save_strategy "steps" \
-    --save_steps 10000 \
+    --save_strategy "no" \
+    --save_steps 1e5 \
     --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
-    --warmup_ratio 0.03 \
+    --warmup_ratio 0.08 \
     --lr_scheduler_type "cosine" \
     --logging_steps 1 \
     --tf32 True \
@@ -66,5 +66,6 @@ srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb \
-    --run_name ${SAVE_PATH}'
+    --report_to tensorboard \
+    --run_name ${SAVE_PATH} \
+    --predict_failure_label True'

@@ -1,13 +1,13 @@
 #!/bin/bash
 set -x
 
-wandb login
+# wandb login
 
 export GPUS_PER_NODE=2
 export CUDA_VISIBLE_DEVICES=0,1
-EPOCH=2
+EPOCH=10
 
-SAVE_PATH=llava-rvt-debug-ep${EPOCH}
+SAVE_PATH=llava_llama3_rvt_alltask_lora_debug_ep${EPOCH}
 MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
 
 
@@ -18,7 +18,7 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llava_llama_3_rvt \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/llava_close_jar_train_0.json \
+    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/rvt_llava_data/all_tasks.json \
     --image_folder /home/daiyp/Open-LLaVA-NeXT \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
@@ -37,11 +37,11 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 4 \
+    --save_steps 1e5 \
     --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
-    --warmup_ratio 0.03 \
+    --warmup_ratio 0.08 \
     --lr_scheduler_type "cosine" \
     --logging_steps 1 \
     --tf32 True \
@@ -49,5 +49,6 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --gradient_checkpointing True \
     --dataloader_num_workers 3 \
     --lazy_preprocess True \
-    --report_to wandb \
-    --run_name ${SAVE_PATH}
+    --report_to tensorboard \
+    --run_name ${SAVE_PATH} \
+    --predict_failure_label True
