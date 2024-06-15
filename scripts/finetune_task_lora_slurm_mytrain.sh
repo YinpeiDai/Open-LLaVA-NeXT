@@ -6,7 +6,7 @@
 #SBATCH --partition=spgpu
 #SBATCH --nodes=2                    # nodes
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-#SBATCH --cpus-per-task=4            # number of cores per tasks
+#SBATCH --cpus-per-task=5            # number of cores per tasks
 #SBATCH --gres=gpu:4                 # number of gpus
 #SBATCH --mem-per-gpu=40G       
 #SBATCH --time=5-00:00:00              # maximum execution time (HH:MM:SS)
@@ -28,7 +28,7 @@ echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
 
 export SAVE_PATH=llava_llama3_rvt_alltask_lora_debug_ep${EPOCH}
-export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b
+export MODEL_PATH=/scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b
 
 set -x
 
@@ -54,7 +54,7 @@ srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
     --bf16 True \
     --output_dir checkpoints/${SAVE_PATH} \
     --num_train_epochs $EPOCH \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 4 \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \

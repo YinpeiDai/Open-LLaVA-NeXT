@@ -9,7 +9,7 @@ EPOCH=10
 
 SAVE_PATH=llava_llama3_rvt_alltask_lora_debug_ep${EPOCH}
 # MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
-MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b/
+MODEL_PATH=/scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b
 
 
 

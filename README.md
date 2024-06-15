@@ -118,6 +118,8 @@ See [Evaluation.md](docs/Evaluation.md).
 ## Ready for greaklakes
 ```
 cd <Open-LLaVA-NeXT-dir>
+micromanba to this env
+pip install tensorboardX
 git pull
 git checkout dev
 source setup_greatlakes.bash
