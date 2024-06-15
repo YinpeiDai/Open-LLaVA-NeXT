@@ -14,6 +14,9 @@
 #SBATCH --mail-user=daiyp@umich.edu
 #SBATCH --mail-type=BEGIN,END
 
+source /home/daiyp/.bashrc
+cd /home/daiyp/Open-LLaVA-NeXT
+source setup_greatlakes.bash
 
 
 export GPUS_PER_NODE=4
@@ -26,6 +29,8 @@ echo "MASTER_ADDR="$MASTER_ADDR
 
 export SAVE_PATH=llava_llama3_rvt_alltask_lora_debug_ep${EPOCH}
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b
+
+set -x
 
 srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
 --nproc_per_node $GPUS_PER_NODE --nnodes $SLURM_NNODES --node_rank $SLURM_PROCID \

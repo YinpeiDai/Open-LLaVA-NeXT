@@ -111,3 +111,17 @@ See [Evaluation.md](docs/Evaluation.md).
 - [LLaVA](https://github.com/haotian-liu/LLaVA): the codebase we built upon. Thanks for their brilliant contributions to the community! We just can't wait to use LLaVA-NeXT.
 - [ShareGPT4V](https://github.com/InternLM/InternLM-XComposer/tree/main/projects/ShareGPT4V): Thanks for their code about finetuning the vision tower.
 - [VLMEvalKit](https://github.com/open-compass/VLMEvalKit): the amazing open-sourced suit for evaluating various LMMs!
+
+
+
+
+## Ready for greaklakes
+```
+cd <Open-LLaVA-NeXT-dir>
+git pull
+git checkout dev
+source setup_greatlakes.bash
+ln -s /nfs/turbo/coe-chaijy-unreplicated/daiyp/augmented_data_heuristic  augmented_data_heuristic
+python gather_rvt_llava_data.py
+./scripts/v1_6/train/8b/finetune_task_lora_slurm_mytrain.sh
+```

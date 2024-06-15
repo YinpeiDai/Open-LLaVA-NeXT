@@ -2,7 +2,7 @@ import json
 import os
 from llava.utils  import RLBENCH_TASKS
 
-data_path  = "/home/daiyp/Open-LLaVA-NeXT/augmented_data_heuristic"
+data_path  = "augmented_data_heuristic"
 save_dir = "playground/rvt_llava_data"
 os.makedirs(save_dir, exist_ok=True)
 

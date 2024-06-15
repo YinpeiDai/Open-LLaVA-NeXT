@@ -3,12 +3,13 @@ set -x
 
 # wandb login
 
-export GPUS_PER_NODE=2
-export CUDA_VISIBLE_DEVICES=0,1
+export GPUS_PER_NODE=1
+export CUDA_VISIBLE_DEVICES=0
 EPOCH=10
 
 SAVE_PATH=llava_llama3_rvt_alltask_lora_debug_ep${EPOCH}
-MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
+# MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
+MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b/
 
 
 
@@ -32,7 +33,7 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --bf16 True \
     --output_dir checkpoints/${SAVE_PATH} \
     --num_train_epochs $EPOCH \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
