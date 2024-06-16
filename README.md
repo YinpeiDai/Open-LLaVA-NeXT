@@ -127,3 +127,24 @@ ln -s /nfs/turbo/coe-chaijy-unreplicated/daiyp/augmented_data_heuristic  augment
 python gather_rvt_llava_data.py
 ./scripts/v1_6/train/8b/finetune_task_lora_slurm_mytrain.sh
 ```
+
+
+### GPU usage test
+
+|stage|GPU|bs-per-GPU|peak mem|time|
+|--|--|--|--|--|
+|zero2|2|1|38.4|2.63s/it|
+|zero2|2|2|44.1|5.1s/it|
+|zero2|4|2|44.4|5.41s/it|
+|zero3|2|1|42.4|3.23s/it|
+|zero3|2|2|43.0|5.68s/it|
+|zero3|4|2|43.1|6.98s/it|
+|zero3-offload|4|2|41.5|8.47s/it|
+|zero3-offload|4|4|45.3|12.73s/it|
+
+
+zero2 8gpu-bs16 5.5s, 8gpu-bs16-acc2 11s
+zero3 8gpu-bs16 7  
+zero3-offload 4gpu-bs16 12.73, 8gpu-bs32 13s
+
+solution: better to use zero2

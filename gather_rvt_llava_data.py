@@ -21,12 +21,32 @@ for task in RLBENCH_TASKS:
 
     with open(os.path.join(save_dir, task + ".json"), "w") as f:
         json.dump(task_data, f, indent=2)
+    print(task, len(task_data))
 
 with open(os.path.join(save_dir, "all_tasks.json"), "w") as f:
     json.dump(all_data, f)
 
 
 print("total data size: ", len(all_data))
+# put_item_in_drawer 12978
+# reach_and_drag 6447
+# turn_tap 2700
+# slide_block_to_color_target 4291
+# open_drawer 4444
+# put_groceries_in_cupboard 6684
+# place_shape_in_shape_sorter 5303
+# put_money_in_safe 6500
+# push_buttons 4740
+# close_jar 7784
+# stack_blocks 17021
+# place_cups 11555
+# place_wine_at_rack_location 6500
+# light_bulb_in 7270
+# sweep_to_dustpan_of_size 6395
+# insert_onto_square_peg 6480
+# meat_off_grill 6480
+# stack_cups 12603
+# total data size:  136175
             
 # ## find the longest one to test the GPU memory limit
 # max_length = 0
