@@ -26,7 +26,7 @@ from llava.model import *
 from llava.train.llava_trainer import LLaVATrainer
 
 from peft.peft_model import PeftModel
-from llava.utils import RLBENCH_TASKS
+from llava.utils import RLBENCH_TASKS, TEMP_0_label, TEMP_0_nolabel, TEMP_label, TEMP_nolabel
 
 
 local_rank = None
@@ -58,10 +58,6 @@ class MyDataArguments(DataArguments):
 
 
 def return_sentence(sentence, args):
-    TEMP_0_nolabel = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, what's the next instruction for the robot arm?"
-    TEMP_nolabel = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". {robot_delta_state} Based on the visual observation and the context, what's the next instruction for the robot arm?"
-    TEMP_0_label = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
-    TEMP_label = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". {robot_delta_state} Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
     if sentence["from"] == "human":
         if "robot_delta_state" not in sentence: # first step
             if args.predict_failure_label:

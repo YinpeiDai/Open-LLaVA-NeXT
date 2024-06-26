@@ -72,7 +72,7 @@ class ModelWorker:
         image = Image.open(BytesIO(base64.b64decode(image_base64)))
 
         # save image size
-        image.save("image.png")
+        # image.save("/home/daiyp/manipulation/RVT/rvt/runs/reconstruct_image.png")
 
         image_sizes = [image.size]
         image_tensor = process_images([image], image_processor, model.config)
@@ -170,5 +170,4 @@ if __name__ == "__main__":
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
 
     # python deploy/llava_server.py --model-path <lora_model_save_path> --model-base <llama3-llava-next-8b-path> --model-name llava_llama3_lora
-
     # then run llava_api in rvt folder 

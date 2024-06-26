@@ -5,3 +5,4 @@ playground/
 __pycache__/
 checkpoints/
 sandbox/
+augmented_data_heuristic/

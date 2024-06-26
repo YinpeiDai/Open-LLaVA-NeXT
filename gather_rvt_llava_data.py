@@ -27,6 +27,13 @@ with open(os.path.join(save_dir, "all_tasks.json"), "w") as f:
     json.dump(all_data, f)
 
 
+# 0622v1,v2 use all data, but no success
+# augment_data v2, dont use slide_block_to_color_target. only include perturbation
+# augment data v1, use all, but for slide_block (only success)
+
+
+
+
 print("total data size: ", len(all_data))
 # put_item_in_drawer 12978
 # reach_and_drag 6447
