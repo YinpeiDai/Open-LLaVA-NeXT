@@ -6,7 +6,7 @@
 #SBATCH --partition=spgpu
 #SBATCH --nodes=2                    # nodes
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-#SBATCH --cpus-per-task=5            # number of cores per tasks
+#SBATCH --cpus-per-task=16            # number of cores per tasks
 #SBATCH --gres=gpu:4                 # number of gpus
 #SBATCH --mem-per-gpu=40G       
 #SBATCH --time=5-00:00:00              # maximum execution time (HH:MM:SS)
@@ -16,13 +16,13 @@
 
 source /home/daiyp/.bashrc
 cd /home/daiyp/Open-LLaVA-NeXT
-source setup_greatlakes.bash
+source ./scripts/setup_greatlakes.bash
 
 
 export GPUS_PER_NODE=4
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
-export MASTER_PORT=9901
-EPOCH=10
+export MASTER_PORT=9902
+export EPOCH=1
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
@@ -32,7 +32,7 @@ export MODEL_PATH=/scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b
 
 set -x
 
-srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
+srun --jobid $SLURM_JOBID bash -c 'torchrun \
 --nproc_per_node $GPUS_PER_NODE --nnodes $SLURM_NNODES --node_rank $SLURM_PROCID \
  --master_addr $MASTER_ADDR --master_port $MASTER_PORT \
     llava/train/my_train.py \
@@ -54,9 +54,9 @@ srun --jobid $SLURM_JOBID bash -c 'python -m torch.distributed.run \
     --bf16 True \
     --output_dir checkpoints/${SAVE_PATH} \
     --num_train_epochs $EPOCH \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 4 \
     --evaluation_strategy "no" \
     --save_strategy "no" \
     --save_steps 1e5 \

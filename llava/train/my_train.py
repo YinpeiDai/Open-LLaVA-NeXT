@@ -209,15 +209,19 @@ class MyLazySupervisedDataset(Dataset):
                                for conv in sample['conversations']) + img_tokens)
             length_list.append(3200)
         return length_list
+    
+    def get_len(self, item):
+        length = len(item["conversations"][0]["task_goal"].split()) + \
+            len(item["conversations"][0]["previous_instruction"].split()) +\
+            len(item["conversations"][0]["robot_delta_state"].split()) if "robot_delta_state" in item["conversations"][0] else 0 + \
+            max(len(item["conversations"][1]["gpt_instruction"].split()), len(item["conversations"][1]["heuristic_instruction"].split())) 
+        return length
 
     @property
     def modality_lengths(self):
         length_list = []
         for sample in self.list_data_dict:
-            # cur_len = sum(len(conv['value'].split())
-            #               for conv in sample['conversations'])
-            # cur_len = cur_len if 'image' in sample else -cur_len
-            cur_len = 3200
+            cur_len = self.get_len(sample)
             length_list.append(cur_len)
         return length_list
 
