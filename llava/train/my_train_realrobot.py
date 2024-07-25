@@ -8,6 +8,7 @@ import logging
 import os
 import pathlib
 from dataclasses import dataclass, field
+import re
 from typing import Dict, List, Optional, Sequence
 
 import tokenizers
@@ -42,6 +43,7 @@ def rank0_print(*args):
     if local_rank in [0, -1, None]:
         print(*args)
 
+SIM_TRAINED_LORA_DIR = "/home/daiyp/Open-LLaVA-NeXT/checkpoints/llava_llama3_rvt_lora_alltask_ep2_bs64/"
 
 @dataclass
 class MyDataArguments(DataArguments):
@@ -58,28 +60,17 @@ class MyDataArguments(DataArguments):
 
 
 def return_sentence(sentence, args):
+    TEMP_0_label_realrobot = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
+    TEMP_label_realrobot = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
+
     if sentence["from"] == "human":
-        if "robot_delta_state" not in sentence: # first step
-            if args.predict_failure_label:
-                return TEMP_0_label.format(task_goal=sentence["task_goal"])
-            else:
-                return TEMP_0_nolabel.format(task_goal=sentence["task_goal"])
+        if sentence["previous_instruction"] == "The robot is about to start the task":
+            return TEMP_0_label_realrobot.format(task_goal=sentence["task_goal"])
         else:
-            if args.predict_failure_label:
-                return TEMP_label.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"], robot_delta_state=sentence["robot_delta_state"])
-            else:
-                return TEMP_nolabel.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"], robot_delta_state=sentence["robot_delta_state"])
+            return TEMP_label_realrobot.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"])
     else:
-        if args.predict_failure_label:
-            if args.predict_heuristic:
-                return sentence["heuristic_instruction"]
-            else:
-                return sentence["gpt_instruction"]
-        else:
-            if args.predict_heuristic:
-                return sentence["heuristic_instruction_no_label"]
-            else:
-                return sentence["gpt_instruction_no_label"]
+        return sentence["gpt_instruction"]
+
 
 def preprocess_llama3_rvt(
     sources,
@@ -91,7 +82,7 @@ def preprocess_llama3_rvt(
     if task_name is None:
         assert conversation_lib.default_conversation.version == "llama3_rvt"
     else:
-        assert task_name in RLBENCH_TASKS
+        assert task_name in ["pick_and_place_fruit","push_buttons","put_item_in_shelf","open_drawer"]
         assert conversation_lib.default_conversation.version == f"llama3_rvt_{task_name}"
     conv = conversation_lib.default_conversation.copy()        
     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
@@ -208,9 +199,8 @@ class MyLazySupervisedDataset(Dataset):
     
     def get_len(self, item):
         length = len(item["conversations"][0]["task_goal"].split()) + \
-            len(item["conversations"][0]["previous_instruction"].split()) +\
-            len(item["conversations"][0]["robot_delta_state"].split()) if "robot_delta_state" in item["conversations"][0] else 0 + \
-            max(len(item["conversations"][1]["gpt_instruction"].split()), len(item["conversations"][1]["heuristic_instruction"].split())) 
+            len(item["conversations"][0]["previous_instruction"].split()) + \
+            len(item["conversations"][1]["gpt_instruction"].split())
         return length
 
     @property
@@ -380,6 +370,7 @@ def train(attn_implementation="flash_attention_2"):
         model = get_peft_model(model, lora_config)
 
 
+
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -417,6 +408,7 @@ def train(attn_implementation="flash_attention_2"):
         data_args.image_processor = vision_tower.image_processor
         data_args.is_multimodal = True
 
+
         model.config.image_aspect_ratio = data_args.image_aspect_ratio
         if data_args.image_aspect_ratio == 'anyres':
             base_size = vision_tower.config.image_size
@@ -430,14 +422,6 @@ def train(attn_implementation="flash_attention_2"):
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
         model.config.unfreeze_mm_vision_tower = training_args.unfreeze_mm_vision_tower
 
-        # Calculate total parameters and trainable parameters
-        total_params = sum(p.numel() for p in model.get_model().parameters())
-        trainable_params = sum(
-            p.numel() for p in model.get_model().parameters() if p.requires_grad)
-
-        rank0_print(f"Total parameters: {format_bytes(total_params)}")
-        rank0_print(f"Trainable parameters: {format_bytes(trainable_params)}")
-
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         model.config.mm_projector_lr = training_args.mm_projector_lr
@@ -447,6 +431,29 @@ def train(attn_implementation="flash_attention_2"):
         model.initialize_vision_tokenizer(model_args, tokenizer=tokenizer)
         model.config.pad_token_id = tokenizer.pad_token_id
 
+    param_device_map_dict = {}
+    for k, v in model.named_parameters():
+        param_device_map_dict[k] = v.device        
+
+
+    # Load the existing LoRA adapter
+    model.load_adapter(model_id=SIM_TRAINED_LORA_DIR, adapter_name="default")
+    model.set_adapter("default")
+
+    
+    bin_path = os.path.join(SIM_TRAINED_LORA_DIR, "non_lora_trainables.bin")
+    non_lora_trainables = torch.load(bin_path, map_location="cpu")
+    non_lora_trainables = {k: v.to(param_device_map_dict[k]) for k, v in non_lora_trainables.items()}
+    model.load_state_dict(non_lora_trainables, strict=False)
+
+
+    # Calculate total parameters and trainable parameters
+    total_params = sum(p.numel() for p in model.get_model().parameters())
+    trainable_params = sum(
+        p.numel() for p in model.get_model().parameters() if p.requires_grad)
+    
+    rank0_print(f"Total parameters: {format_bytes(total_params)}")
+    rank0_print(f"Trainable parameters: {format_bytes(trainable_params)}")
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
