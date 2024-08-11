@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-#SBATCH --job-name=llava-llama3-rvt-lora-alltask    # name
+#SBATCH --job-name=llava-llama3-rvt-lora-realrobot    # name
 #SBATCH --account=chaijy2
 #SBATCH --partition=spgpu
 #SBATCH --nodes=2                    # nodes
@@ -21,13 +21,15 @@ source ./scripts/setup_greatlakes.bash
 
 export GPUS_PER_NODE=4
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
-export MASTER_PORT=9902
-export EPOCH=2
+export MASTER_PORT=9905
+export EPOCH=3
 
+echo "GPU_PER_NODE="$GPUS_PER_NODE
+echo "MASTER_PORT="$MASTER_PORT
+echo "EPCH="$EPOCH
 echo "MASTER_ADDR="$MASTER_ADDR
-/bin/hostname
 
-export SAVE_PATH=llava_llama3_rvt_lora_alltask_ep${EPOCH}_bs64
+export SAVE_PATH=llava_llama3_rvt_realrobot_ep${EPOCH}_bs64_nodup_v2
 export MODEL_PATH=/scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b
 
 set -x
@@ -35,12 +37,12 @@ set -x
 srun --jobid $SLURM_JOBID bash -c 'torchrun \
 --nproc_per_node $GPUS_PER_NODE --nnodes $SLURM_NNODES --node_rank $SLURM_PROCID \
  --master_addr $MASTER_ADDR --master_port $MASTER_PORT \
-    llava/train/my_train.py \
-    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
+    llava/train/my_train_realrobot.py \
+    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 1e-5 \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llava_llama_3_rvt \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/rvt_llava_data/data0626/all_tasks.json \
+    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/rvt_llava_data_real_robot/all_tasks.json \
     --image_folder /home/daiyp/Open-LLaVA-NeXT \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
@@ -61,7 +63,7 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --save_strategy "no" \
     --save_steps 1e5 \
     --save_total_limit 1 \
-    --learning_rate 2e-5 \
+    --learning_rate 1e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.1 \
     --lr_scheduler_type "cosine" \

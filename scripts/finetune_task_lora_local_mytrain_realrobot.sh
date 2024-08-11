@@ -7,19 +7,19 @@ export GPUS_PER_NODE=2
 export CUDA_VISIBLE_DEVICES=0,1
 EPOCH=2
 
-SAVE_PATH=llava_llama3_rvt_alltask_lora_debug
+SAVE_PATH=llava_llama3_rvt_real_robot_debug 
 # MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
 MODEL_PATH=/scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b
 
 
 
 torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr localhost --master_port 29504 \
-    llava/train/my_train.py \
+    llava/train/my_train_realrobot.py \
     --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llava_llama_3_rvt \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/rvt_llava_data/all_tasks.json \
+    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/rvt_llava_data_real_robot/all_tasks.json \
     --image_folder /home/daiyp/Open-LLaVA-NeXT \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
@@ -42,7 +42,7 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
-    --warmup_ratio 0.08 \
+    --warmup_ratio 0.1 \
     --lr_scheduler_type "cosine" \
     --logging_steps 1 \
     --tf32 True \

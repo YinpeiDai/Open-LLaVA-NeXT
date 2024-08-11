@@ -43,7 +43,7 @@ def rank0_print(*args):
     if local_rank in [0, -1, None]:
         print(*args)
 
-SIM_TRAINED_LORA_DIR = "/home/daiyp/Open-LLaVA-NeXT/checkpoints/llava_llama3_rvt_lora_alltask_ep2_bs64/"
+SIM_TRAINED_LORA_DIR = "/scratch/chaijy_root/chaijy2/daiyp/llava_llama3_rvt_lora_alltask_ep2_bs64"
 
 @dataclass
 class MyDataArguments(DataArguments):
@@ -64,7 +64,7 @@ def return_sentence(sentence, args):
     TEMP_label_realrobot = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
 
     if sentence["from"] == "human":
-        if sentence["previous_instruction"] == "The robot is about to start the task":
+        if "The robot is about to start the task." in sentence["previous_instruction"]:
             return TEMP_0_label_realrobot.format(task_goal=sentence["task_goal"])
         else:
             return TEMP_label_realrobot.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"])
@@ -403,7 +403,7 @@ def train(attn_implementation="flash_attention_2"):
 
         vision_tower = model.get_vision_tower()
         vision_tower.to(
-            dtype=torch.bfloat16 if training_args.bf16 else torch.float16, device=training_args.device)
+            dtype=torch.bfloat16 if training_args.bf16 else torch.float16, device="cpu")
 
         data_args.image_processor = vision_tower.image_processor
         data_args.is_multimodal = True
@@ -433,17 +433,20 @@ def train(attn_implementation="flash_attention_2"):
 
     param_device_map_dict = {}
     for k, v in model.named_parameters():
-        param_device_map_dict[k] = v.device        
-
+        param_device_map_dict[k] = str(v.device)
 
     # Load the existing LoRA adapter
-    model.load_adapter(model_id=SIM_TRAINED_LORA_DIR, adapter_name="default")
+    print("Load and set LoRA adapter params")
+    model.load_adapter(model_id=SIM_TRAINED_LORA_DIR, adapter_name="default", torch_device="cpu")
     model.set_adapter("default")
 
-    
+    vision_tower = model.get_vision_tower()
+    vision_tower.to(training_args.device)
+
+    print("Load non lora trainables")
     bin_path = os.path.join(SIM_TRAINED_LORA_DIR, "non_lora_trainables.bin")
     non_lora_trainables = torch.load(bin_path, map_location="cpu")
-    non_lora_trainables = {k: v.to(param_device_map_dict[k]) for k, v in non_lora_trainables.items()}
+    # non_lora_trainables = {k: v.to(param_device_map_dict[k]) for k, v in non_lora_trainables.items()}
     model.load_state_dict(non_lora_trainables, strict=False)
 
 

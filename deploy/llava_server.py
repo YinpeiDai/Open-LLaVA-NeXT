@@ -71,8 +71,9 @@ class ModelWorker:
         image_base64 = params["image"]
         image = Image.open(BytesIO(base64.b64decode(image_base64)))
 
+        print(f"get prompt: {ori_prompt}")
         # save image size
-        # image.save("/home/daiyp/manipulation/RVT/rvt/runs/reconstruct_image.png")
+        image.save("reconstruct_image.png")
 
         image_sizes = [image.size]
         image_tensor = process_images([image], image_processor, model.config)
@@ -149,11 +150,15 @@ async def generate_stream(request: Request):
     background_tasks.add_task(release_model_semaphore)
     return StreamingResponse(generator, background=background_tasks)
 
+@app.get("/test")
+async def test():
+    return {"message": "Hello World"}
+
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default="0.0.0.0")
+    parser.add_argument("--host", type=str, default="127.0.0.1")
     parser.add_argument("--port", type=int, default=21002)
     parser.add_argument("--model-path", type=str, default="/data/daiyp/foundation_models/llama3-llava-next-8b")
     parser.add_argument("--model-base", type=str, default=None)
@@ -170,4 +175,6 @@ if __name__ == "__main__":
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
 
     # python deploy/llava_server.py --model-path <lora_model_save_path> --model-base <llama3-llava-next-8b-path> --model-name llava_llama3_lora
-    # then run llava_api in rvt folder 
+    # then run llava_api in rvt folder
+
+    # CUDA_VISIBLE_DEVICES=1 python deploy/llava_server.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/llava_llama3_rvt_lora_alltask_ep2_bs64  --model-base /scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b --model-name llava_llama3_lora

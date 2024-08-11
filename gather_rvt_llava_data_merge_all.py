@@ -3,7 +3,7 @@ import json
 import os
 from llava.utils  import RLBENCH_TASKS
 
-save_dir = "playground/rvt_llava_data_debug"
+save_dir = "playground/rvt_llava_data"
 os.makedirs(save_dir, exist_ok=True)
 
 # TODO: combine catastrophy data and more failure data
