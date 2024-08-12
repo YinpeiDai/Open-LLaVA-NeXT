@@ -40,6 +40,12 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from transformers import TextIteratorStreamer
 from threading import Thread
 
+from llava.train.my_train_commongrid import CONV_COMMONGRID_LLAMA3_TEMPLATE, preprocess_llama3
+from llava import conversation as conversation_lib
+
+conversation_lib.default_conversation = CONV_COMMONGRID_LLAMA3_TEMPLATE
+
+
 
 global_counter = 0
 
@@ -66,35 +72,25 @@ class ModelWorker:
     @torch.inference_mode()
     def generate_stream(self, params):
         tokenizer, model, image_processor = self.tokenizer, self.model, self.image_processor
-        prompt = params["prompt"]
+        prompt = params["messages"]
         ori_prompt = prompt
-        image_base64 = params["image"]
-        image = Image.open(BytesIO(base64.b64decode(image_base64)))
 
-        print(f"get prompt: {ori_prompt}")
-        # save image size
-        image.save("reconstruct_image.png")
-
-        image_sizes = [image.size]
-        image_tensor = process_images([image], image_processor, model.config)
-        image_tensor = [_image.to(dtype=torch.float16, device=self.device) for _image in image_tensor]
-
-        image_args = {"images": image_tensor, "image_sizes": image_sizes}
+        input_ids = tokenizer.apply_chat_template(prompt, return_tensors='pt')
+        print(tokenizer.decode(input_ids[0])) # print the prompt
         
         temperature = float(params.get("temperature", 1.0))
         top_p = float(params.get("top_p", 1.0))
         do_sample = False
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
+
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
 
         thread = Thread(target=model.generate, kwargs=dict(
             inputs=input_ids,
             do_sample=False,
-            max_new_tokens=256,
+            max_new_tokens=10,
             streamer=streamer,
             use_cache=True,
-            **image_args
         ))
         thread.start()
 
@@ -177,6 +173,5 @@ if __name__ == "__main__":
     # python deploy/llava_server.py --model-path <lora_model_save_path> --model-base <llama3-llava-next-8b-path> --model-name llava_llama3_lora
     # then run llava_api in rvt folder
 
-    # CUDA_VISIBLE_DEVICES=1 python deploy/llava_server.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/llava_llama3_rvt_lora_alltask_ep2_bs64  --model-base /scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b --model-name llava_llama3_lora
 
     # CUDA_VISIBLE_DEVICES=1 python deploy/llava_server.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/commongrid_llama3_lora_ep2_bs64 --model-base /nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF --model-name llama3_lora
