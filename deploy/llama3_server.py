@@ -73,7 +73,6 @@ class ModelWorker:
     def generate_stream(self, params):
         tokenizer, model, image_processor = self.tokenizer, self.model, self.image_processor
         prompt = params["messages"]
-        ori_prompt = prompt
 
         input_ids = tokenizer.apply_chat_template(prompt, return_tensors='pt')
         print(tokenizer.decode(input_ids[0])) # print the prompt
@@ -94,10 +93,8 @@ class ModelWorker:
         ))
         thread.start()
 
-        generated_text = ori_prompt
         for new_text in streamer:
-            generated_text += new_text
-            yield json.dumps({"text": generated_text, "error_code": 0}).encode() + b"\0"
+            yield json.dumps({"text": new_text, "error_code": 0}).encode() + b"\0"
 
     def generate_stream_gate(self, params):
         try:
