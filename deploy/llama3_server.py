@@ -1,9 +1,5 @@
 import argparse
-import base64
-from io import BytesIO
 import json
-
-from PIL import Image
 
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
@@ -12,38 +8,21 @@ import uvicorn
 
 from llava.utils import server_error_msg
 from llava.model.builder import load_pretrained_model
-from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token
-from llava.constants import IMAGE_TOKEN_INDEX
 from transformers import TextIteratorStreamer
 from threading import Thread
 
 import argparse
 import asyncio
 import json
-import time
-import threading
-import uuid
 
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
-import requests
 import torch
 import uvicorn
-from functools import partial
 
-from llava.constants import WORKER_HEART_BEAT_INTERVAL
-from llava.utils import (build_logger, server_error_msg,
-    pretty_print_semaphore)
-from llava.model.builder import load_pretrained_model
-from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token
-from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.utils import server_error_msg
 from transformers import TextIteratorStreamer
 from threading import Thread
-
-from llava.train.my_train_commongrid import CONV_COMMONGRID_LLAMA3_TEMPLATE, preprocess_llama3
-from llava import conversation as conversation_lib
-
-conversation_lib.default_conversation = CONV_COMMONGRID_LLAMA3_TEMPLATE
 
 
 
@@ -64,6 +43,9 @@ class ModelWorker:
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
             model_path, model_base, model_name, device=device)
         
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+                
         self.device = device
         self.model.eval()
         self.model.tie_weights()
@@ -73,13 +55,29 @@ class ModelWorker:
     def generate_stream(self, params):
         tokenizer, model, image_processor = self.tokenizer, self.model, self.image_processor
         prompt = params["messages"]
-
-        input_ids = tokenizer.apply_chat_template(prompt, return_tensors='pt')
-        print(tokenizer.decode(input_ids[0])) # print the prompt
+        
+        # trucate the left context
+        input_ids = tokenizer.apply_chat_template(prompt, return_tensors='pt', padding="longest", max_length=5120)
+        
+        while input_ids.shape[1] > 5100:
+            prompt = prompt[:1] + prompt[3:]
+            input_ids = tokenizer.apply_chat_template(prompt, return_tensors='pt', padding="longest", max_length=5120)
+            
+        
+        # print(input_ids)
+        # print(tokenizer.decode(input_ids[0])) # print the prompt
+        # print(input_ids.shape)
+        
+        input_ids = input_ids.to(self.device)
         
         temperature = float(params.get("temperature", 1.0))
         top_p = float(params.get("top_p", 1.0))
         do_sample = False
+        
+        terminators = [
+            tokenizer.eos_token_id,
+            tokenizer.convert_tokens_to_ids("<|eot_id|>")
+        ]
 
 
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
@@ -90,6 +88,8 @@ class ModelWorker:
             max_new_tokens=10,
             streamer=streamer,
             use_cache=True,
+            eos_token_id=terminators
+            
         ))
         thread.start()
 
@@ -151,8 +151,8 @@ async def test():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=21002)
+    parser.add_argument("--host", type=str, default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=21004)
     parser.add_argument("--model-path", type=str, default="/data/daiyp/foundation_models/llama3-llava-next-8b")
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--model-name", type=str, default="llava_llama3")
@@ -171,4 +171,4 @@ if __name__ == "__main__":
     # then run llava_api in rvt folder
 
 
-    # CUDA_VISIBLE_DEVICES=1 python deploy/llava_server.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/commongrid_llama3_lora_ep2_bs64 --model-base /nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF --model-name llama3_lora
+    # CUDA_VISIBLE_DEVICES=0 python deploy/llama3_server.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/commongrid_llama3_lora_ep2_bs64 --model-base /nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF --model-name llama3_lora
