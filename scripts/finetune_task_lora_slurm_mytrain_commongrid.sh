@@ -22,7 +22,8 @@ export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
 export MASTER_PORT=9902
 export EPOCH=2
-export BELIEF_SETTING=no_belief # no_belief, zeroth_belief, zeroth_and_firstbelief
+export BELIEF_SETTING=no_belief # no_belief, zeroth_belief, zeroth_and_first_belief
+
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname

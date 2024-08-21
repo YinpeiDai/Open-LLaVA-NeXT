@@ -57,8 +57,7 @@ Then you need to take actions to accomplish the task with another agent together
 	"action": <action>
 }
 
-Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right.
-"""
+Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right."""
 
 
 system_prompt_zeroth_belief = """This is a WIDTHxHEIGHT 2D grid world where two agents collaboratively accomplish tasks. You are one of the agent. 
@@ -161,18 +160,16 @@ def preprocess_llama3(
 ) -> Dict:
     IGNORE_INDEX = -100
 
-    roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
-
     # Apply prompt templates
     conversations = []
     for i, source in enumerate(sources):
         info = source[0]["info"]
         if setting == "no_belief":
-            system_prompt = system_prompt_no_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["win_size"]))
+            system_prompt = system_prompt_no_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
         elif setting == "zeroth_belief":
-            system_prompt = system_prompt_zeroth_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["win_size"]))
+            system_prompt = system_prompt_zeroth_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
         elif setting == "zeroth_and_first_belief":
-            system_prompt = system_prompt_zeroth_and_first_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["win_size"]))
+            system_prompt = system_prompt_zeroth_and_first_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
         else:
             raise ValueError(f"Unknown setting: {setting}")
         
@@ -186,6 +183,8 @@ def preprocess_llama3(
             sep_style=SeparatorStyle.MPT,
             sep="<|eot_id|>",
         ).copy()
+
+        roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
 
         if roles[source[0]["from"]] != conv.roles[0]:
             # Skip the first one if it is not from human
@@ -205,8 +204,7 @@ def preprocess_llama3(
         padding="longest",
         max_length=tokenizer.model_max_length,
         truncation=True,
-    ).input_ids
-
+    ).input_ids    
     targets = input_ids.clone()
 
     # Mask targets # conv.sep = <|eot_id|>
@@ -249,6 +247,11 @@ def preprocess_llama3(
                     f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
                     f" (ignored)"
                 )
+    
+    with open("input_ids.txt", "w") as f:
+        f.write(str(input_ids.numpy().tolist()))
+    with open("targets.txt", "w") as f:
+        f.write(str(targets.numpy().tolist()))
 
     return dict(
         input_ids=input_ids,

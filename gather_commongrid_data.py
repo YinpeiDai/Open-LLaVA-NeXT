@@ -233,7 +233,7 @@ def generate_data(
 if __name__ == "__main__":
     window_size = 12
     dirname = "/home/daiyp/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta"
-    for setting in ["no_belief", "zeroth_belief", "zeroth_and_firstbelief"]:
+    for setting in ["no_belief", "zeroth_belief", "zeroth_and_first_belief"]:
         all_data = []
         for file in sorted(os.listdir(dirname)):
             if file.endswith(".json") and "llava" not in file:
