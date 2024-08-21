@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 #SBATCH --job-name=commongrid_llama3    # name
 #SBATCH --account=chaijy2
 #SBATCH --partition=spgpu
@@ -23,11 +22,12 @@ export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
 export MASTER_PORT=9902
 export EPOCH=2
+export BELIEF_SETTING=no_belief # no_belief, zeroth_belief, zeroth_and_firstbelief
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
 
-export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64
+export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64_${BELIEF_SETTING}
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
 
 set -x
@@ -40,7 +40,7 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llama3 \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/common_grid_data/sample_data_llava_format_30k_v1.json \
+    --data_path playground/commongrid/dataset/SFT/meta/llava_format_${BELIEF_SETTING}.json \
     --bf16 True \
     --group_by_modality_length True \
     --output_dir checkpoints/${SAVE_PATH} \
@@ -63,4 +63,5 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --dataloader_num_workers 3 \
     --lazy_preprocess True \
     --report_to tensorboard \
-    --run_name ${SAVE_PATH} '
+    --run_name ${SAVE_PATH} \
+    --setting ${BELIEF_SETTING} '

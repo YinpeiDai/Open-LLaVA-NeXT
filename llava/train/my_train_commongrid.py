@@ -1,9 +1,10 @@
 
 import copy
+from dataclasses import dataclass, field
 import json
 import os
 import pathlib
-from typing import Dict
+from typing import Dict, Optional
 
 import tokenizers
 import torch
@@ -15,61 +16,244 @@ from llava.model import *
 from llava.train.llava_trainer import LLaVATrainer
 
 
-
 local_rank = None
 
 from llava.train.train import (
-    ModelArguments, DataArguments, TrainingArguments, get_peft_state_maybe_zero_3,
+    ModelArguments, TrainingArguments, get_peft_state_maybe_zero_3,
     get_peft_state_non_lora_maybe_zero_3,
     find_all_linear_names, safe_save_model_for_hf_trainer, DataCollatorForSupervisedDataset,
     format_bytes, preprocess_llama3
 )
 
 from llava.conversation import Conversation, SeparatorStyle
-system_prompt = """
-This is a 12x12 2D grid world where two agents collobratively accomplish tasks. 
+
+
+system_prompt_no_belief = """This is a WIDTHxHEIGHT 2D grid world where two agents collaboratively accomplish tasks. You are one of the agent. 
 We use the following symbols to represent the cell:
 {
     '<_>': 'empty cell',
-    '<agent0>': 'agent0',
-    '<agent1>': 'agent1',
     '<W>': 'wall cell',
     '<X>': 'unseen cell'
 }
-Other objects will be given in the inputs in the form of '<object+id>'
-
-You can take actions:
-1. forward/backward/left/right: move the agent in the corresponding direction.
-2. pick: pick up the object in the current cell, only is valid when agent is facing to the object.
-3. exchange: exchange the object with the other agent, only is valid when the agent is facing to the other agent.
+All possible actions you may take:
+1. forward/left/right: move the agent in the corresponding direction.
+2. pick: pick up the object in the front cell. Agent can carry at most one object at a time.
+3. open: open the object. Some objects need to be opened with a key.
+4. exchange: exchange the object with the other agent, only is valid when the agent is facing to the other agent and synchronously choose to exchange.
+5. share [x, y]: share the information of grid at column x, row y to your partner. x,y are 0-based global coordinates, increasing from left to right, from top to bottom.
+6. request action <action>: request your partner to perform action <action>.
 
 You will be specified with either agent0 or agent1 and given:
 1. The task description.
 2. A 3x3 local grid observed by the specified agent.
-3. Possible actions that you can take.
+3. Possible actions that you can take. You can only perform actions included in the possible actions list.
 4. Description for objects and agent states when they are observed.
+5. When the step number > WINSIZE, a memory map that accumulates all your 3x3 local observations in the history and the description for object and agent states in memory map are given. The map is represented by the cell symbols.
+6. Your partner's message in last round (if any).
+7. Environment feedback on your last action (if any).
 
-Then you need to predict the correction action the specified agent should take to accomplish the task with another agent together. The complete map is not given to you, you should infer from the input information.
+Then you need to take actions to accomplish the task with another agent together. The complete map is not given to you, you should infer from the input information. But you may be given a memory map that records your previous exploration history. You should generate an action for the current step in this following dictionary format:
+{
+	"action": <action>
+}
 
-Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'move forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'move forward' will move the agent to the cell on its left, not the cell on its right.
+Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right.
 """
 
-CONV_COMMONGRID_LLAMA3_TEMPLATE = Conversation(
-    system="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"+system_prompt,
-    roles=("<|start_header_id|>user<|end_header_id|>\n\n",
-           "<|start_header_id|>assistant<|end_header_id|>\n\n"),
-    version="llama3",
-    messages=[],
-    offset=0,
-    sep_style=SeparatorStyle.MPT,
-    sep="<|eot_id|>",
-)
+
+system_prompt_zeroth_belief = """This is a WIDTHxHEIGHT 2D grid world where two agents collaboratively accomplish tasks. You are one of the agent. 
+We use the following symbols to represent the cell:
+{
+    '<_>': 'empty cell',
+    '<W>': 'wall cell',
+    '<X>': 'unseen cell'
+}
+All possible actions you may take:
+1. forward/left/right: move the agent in the corresponding direction.
+2. pick: pick up the object in the front cell. Agent can carry at most one object at a time.
+3. open: open the object. Some objects need to be opened with a key.
+4. exchange: exchange the object with the other agent, only is valid when the agent is facing to the other agent and synchronously choose to exchange.
+5. share [x, y]: share the information of grid at column x, row y to your partner. x,y are 0-based global coordinates, increasing from left to right, from top to bottom.
+6. request action <action>: request your partner to perform action <action>.
+
+You will be specified with either agent0 or agent1 and given:
+1. The task description.
+2. A 3x3 local grid observed by the specified agent.
+3. Possible actions that you can take. You can only perform actions included in the possible actions list.
+4. Description for objects and agent states when they are observed.
+5. When the step number > WINSIZE, a memory map that accumulates all your 3x3 local observations in the history and the description for object and agent states in memory map are given. The map is represented by the cell symbols.
+6. Your partner's message in last round (if any).
+7. Environment feedback on your last action (if any).
+8. Important objects to keep track of their states.
+
+Then you need to take actions to accomplish the task with another agent together. The complete map is not given to you, you should infer from the input information. But you may be given a memory map that records your previous exploration history. You should keep track of the states of important objects and generate an action for the current step in this following dictionary format:
+{
+    "Your belief of the world": {
+        "<important object0>": "state of <important object0>",
+        "<important object1>": "state of <important object1>"
+    },
+    "action": "<action>"
+}
+Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right."""
+
+
+system_prompt_zeroth_and_first_belief = """This is a WIDTHxHEIGHT 2D grid world where two agents collaboratively accomplish tasks. You are one of the agent. 
+We use the following symbols to represent the cell:
+{
+    '<_>': 'empty cell',
+    '<W>': 'wall cell',
+    '<X>': 'unseen cell'
+}
+All possible actions you may take:
+1. forward/left/right: move the agent in the corresponding direction.
+2. pick: pick up the object in the front cell. Agent can carry at most one object at a time.
+3. open: open the object. Some objects need to be opened with a key.
+4. exchange: exchange the object with the other agent, only is valid when the agent is facing to the other agent and synchronously choose to exchange.
+5. share [x, y]: share the information of grid at column x, row y to your partner. x,y are 0-based global coordinates, increasing from left to right, from top to bottom.
+6. request action <action>: request your partner to perform action <action>.
+
+You will be specified with either agent0 or agent1 and given:
+1. The task description.
+2. A 3x3 local grid observed by the specified agent.
+3. Possible actions that you can take. You can only perform actions included in the possible actions list.
+4. Description for objects and agent states when they are observed.
+5. When the step number > WINSIZE, a memory map that accumulates all your 3x3 local observations in the history and the description for object and agent states in memory map are given. The map is represented by the cell symbols.
+6. Your partner's message in last round (if any).
+7. Environment feedback on your last action (if any).
+8. Important objects to keep track of their states.
+
+Then you need to take actions to accomplish the task with another agent together. The complete map is not given to you, you should infer from the input information. But you may be given a memory map that records your previous exploration history. You should keep track of the states of important objects, keep track of how you imagine that your partner will keep track of these important objects based on your observations and dialog history, and generate an action for the current step in this following dictionary format:
+{
+    "Your belief of the world": {
+        "<important object0>": "state of <important object0>",
+        "<important object1>": "state of <important object1>"
+    },
+    "Your belief of your partner's belief of the world": {
+        "<important object0>": "partner's imagination of state of <important object0>",
+        "<important object1>": "partner's imagination of state of <important object1>"
+    },
+    "action": "<action>"
+}
+Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right."""
+
+
+@dataclass
+class DataArguments:
+    data_path: str = field(default=None,
+                           metadata={"help": "Path to the training data."})
+    lazy_preprocess: bool = False
+    is_multimodal: bool = False
+    image_folder: Optional[str] = field(default=None)
+    image_aspect_ratio: str = 'square'
+
+    setting: str = "no_belief" # no_belief, zeroth_belief, zeroth_and_first_belief
 
 
 def rank0_print(*args):
     if local_rank in [0, -1, None]:
         print(*args)
 
+
+def preprocess_llama3(
+    sources,
+    tokenizer: transformers.PreTrainedTokenizer,
+    setting: str = "no_belief",
+) -> Dict:
+    IGNORE_INDEX = -100
+
+    roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
+
+    # Apply prompt templates
+    conversations = []
+    for i, source in enumerate(sources):
+        info = source[0]["info"]
+        if setting == "no_belief":
+            system_prompt = system_prompt_no_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["win_size"]))
+        elif setting == "zeroth_belief":
+            system_prompt = system_prompt_zeroth_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["win_size"]))
+        elif setting == "zeroth_and_first_belief":
+            system_prompt = system_prompt_zeroth_and_first_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["win_size"]))
+        else:
+            raise ValueError(f"Unknown setting: {setting}")
+        
+        conv = Conversation(
+            system="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"+system_prompt,
+            roles=("<|start_header_id|>user<|end_header_id|>\n\n",
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"),
+            version="llama3",
+            messages=[],
+            offset=0,
+            sep_style=SeparatorStyle.MPT,
+            sep="<|eot_id|>",
+        ).copy()
+
+        if roles[source[0]["from"]] != conv.roles[0]:
+            # Skip the first one if it is not from human
+            source = source[1:]
+
+        conv.messages = []
+        for j, sentence in enumerate(source):
+            role = roles[sentence["from"]]
+            assert role == conv.roles[j % 2], f"{i}"
+            conv.append_message(role, sentence["value"])
+        conversations.append(conv.get_prompt())
+
+    # Tokenize conversations
+    input_ids = tokenizer(
+        conversations,
+        return_tensors="pt",
+        padding="longest",
+        max_length=tokenizer.model_max_length,
+        truncation=True,
+    ).input_ids
+
+    targets = input_ids.clone()
+
+    # Mask targets # conv.sep = <|eot_id|>
+    sep = conv.sep + conv.roles[1] # '<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n'
+    is_open_llava_next_llama3 = tokenizer.pad_token == "<pad>"
+    for conversation, target in zip(conversations, targets):
+        total_len = int(target.ne(tokenizer.pad_token_id).sum())
+
+        rounds = conversation.split(conv.sep)
+        re_rounds = [conv.sep.join(rounds[:3])]
+        for conv_idx in range(3, len(rounds), 2):
+            re_rounds.append(conv.sep.join(rounds[conv_idx:conv_idx + 2]))
+        cur_len = 0
+        target[:cur_len] = IGNORE_INDEX
+        for i, rou in enumerate(re_rounds):
+            if rou == "":
+                break
+
+            parts = rou.split(sep) # split with '<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n'
+            if len(parts) != 2:
+                break
+            parts[0] += sep
+
+            round_len = len(tokenizer(rou).input_ids)
+            instruction_len = len(tokenizer(parts[0]).input_ids)
+
+            if is_open_llava_next_llama3 and i > 0:
+                round_len -= 1
+                instruction_len -= 1
+
+            target[cur_len: cur_len + instruction_len] = IGNORE_INDEX
+
+            cur_len += round_len + 1 # add <|eot_id|>
+        target[cur_len:] = IGNORE_INDEX
+
+        if cur_len < tokenizer.model_max_length:
+            if cur_len != total_len:
+                target[:] = IGNORE_INDEX
+                print(
+                    f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
+                    f" (ignored)"
+                )
+
+    return dict(
+        input_ids=input_ids,
+        labels=targets,
+    )
 
 class MyLazySupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
@@ -84,6 +268,7 @@ class MyLazySupervisedDataset(Dataset):
         self.tokenizer = tokenizer
         self.list_data_dict = list_data_dict
         self.data_args = data_args
+        self.setting = data_args.setting
 
     def __len__(self):
         return len(self.list_data_dict)
@@ -124,7 +309,7 @@ class MyLazySupervisedDataset(Dataset):
         data_dict = preprocess_llama3(
             sources,
             self.tokenizer,
-            has_image=False)
+            self.setting)
         if isinstance(i, int):
             data_dict = dict(input_ids=data_dict["input_ids"][0],
                              labels=data_dict["labels"][0])
@@ -235,8 +420,6 @@ def train(attn_implementation=None):
         rank0_print("Adding pad token as <|reserved_special_token_5|>")
         tokenizer.pad_token = "<|reserved_special_token_5|>"
         tokenizer.pad_token_id = 128010
-
-    conversation_lib.default_conversation = CONV_COMMONGRID_LLAMA3_TEMPLATE
 
     model.config.pad_token_id = tokenizer.pad_token_id
 
