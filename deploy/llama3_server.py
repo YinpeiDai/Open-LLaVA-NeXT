@@ -64,9 +64,9 @@ class ModelWorker:
             input_ids = tokenizer.apply_chat_template(prompt, return_tensors='pt', padding="longest", max_length=5120)
             
         
-        # print(input_ids)
-        # print(tokenizer.decode(input_ids[0])) # print the prompt
-        # print(input_ids.shape)
+        print(input_ids)
+        print(tokenizer.decode(input_ids[0])) # print the prompt
+        print(input_ids.shape)
         
         input_ids = input_ids.to(self.device)
         
@@ -85,7 +85,7 @@ class ModelWorker:
         thread = Thread(target=model.generate, kwargs=dict(
             inputs=input_ids,
             do_sample=False,
-            max_new_tokens=10,
+            max_new_tokens=256,
             streamer=streamer,
             use_cache=True,
             eos_token_id=terminators
