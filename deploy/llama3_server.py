@@ -167,7 +167,7 @@ if __name__ == "__main__":
         device=args.device)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
 
-    # python deploy/llava_server.py --model-path <lora_model_save_path> --model-base <llama3-llava-next-8b-path> --model-name llava_llama3_lora
+    # python deploy/llama3_server.py --model-path <lora_model_save_path> --model-base <llama3-llava-next-8b-path> --model-name llava_llama3_lora
     # then run llava_api in rvt folder
 
 
