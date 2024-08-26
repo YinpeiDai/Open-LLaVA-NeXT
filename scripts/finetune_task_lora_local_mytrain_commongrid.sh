@@ -5,12 +5,12 @@ set -x
 
 export GPUS_PER_NODE=1
 export CUDA_VISIBLE_DEVICES=0
-EPOCH=2 # 1 or 2 is better, do not use large number
+EPOCH=1 # 1 or 2 is better, do not use large number
 
 SAVE_PATH=commongrid_llama3-8b-no-belief-debug
 MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
-SETTING=no_belief
-DATA_PATH=/home/daiyp/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/samples/llava_format_${SETTING}.json
+SETTING=first # none, zeroth, first
+DATA_PATH=/home/daiyp/CommonGrid/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/llava_format_${SETTING}_belief.json
 
 torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr localhost --master_port 29504 \
     llava/train/my_train_commongrid.py \

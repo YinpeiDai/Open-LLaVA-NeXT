@@ -45,6 +45,12 @@ For client code, refer to `CommonGrid/Open-LLaVA-NeXT/deploy/llama3_client*.py`
 
 
 ### Training
+#### Cook data for llava format
+```
+cd Open-LLaVA-NeXT
+python gather_commongrid_data
+```
+
 #### Local debug with 1 GPU
 ```
 cd Open-LLaVA-NeXT
@@ -62,7 +68,9 @@ Notes:
 1. `per_device_train_batch_size` is better to set as 1, use `gradient_accumulation_steps` and multiple GPUs to enlarge the total batch size
 2. Deepspeed zero2 is better then zero3 for current experiments
 
+### Evaluation
 
+####
 
 
 

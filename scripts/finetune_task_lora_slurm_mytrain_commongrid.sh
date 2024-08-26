@@ -22,14 +22,17 @@ export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
 export MASTER_PORT=9902
 export EPOCH=2
-export BELIEF_SETTING=no_belief # no_belief, zeroth_belief, zeroth_and_first_belief
 
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
 
 export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64_${BELIEF_SETTING}_debug
+export BELIEF_SETTING=none # none, zeroth, first
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
+export DATA_PATH=/home/daiyp/CommonGrid/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/llava_format_none_belief.json
+
+
 
 set -x
 
@@ -41,7 +44,7 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llama3 \
-    --data_path playground/commongrid/dataset/SFT/meta/llava_format_${BELIEF_SETTING}.json \
+    --data_path ${DATA_PATH} \
     --bf16 True \
     --group_by_modality_length True \
     --output_dir checkpoints/${SAVE_PATH} \
