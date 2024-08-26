@@ -119,8 +119,8 @@ class LlavaAPI:
 
 
 if __name__ == "__main__":
-    # api = LlavaAPI("http://127.0.0.1:21002")
-    api = LlavaAPI("http://141.212.110.118:21002")
+    api = LlavaAPI("http://141.212.106.177:21002")
+    # api = LlavaAPI("http://141.212.110.118:21002")
     image = Image.open("/home/daiyp/Open-LLaVA-NeXT/augmented_data_heuristic/train/close_jar/2/front_rgb/120_expert.png")
     usrmsg = api.prepare_user_msg_for_vlm(
         task_goal="close the purple jar",

@@ -67,8 +67,8 @@ class LlavaAPI:
     
 
 
-if __name__ == "__main__":    
-    api = LlavaAPI("http://141.212.106.177:21004")
+if __name__ == "__main__":
+    api = LlavaAPI("http://141.212.110.118:21006")
     
     
     # example without memory map

@@ -69,7 +69,7 @@ class LlavaAPI:
 
 
 if __name__ == "__main__":    
-    api = LlavaAPI("http://141.212.106.177:21004")
+    api = LlavaAPI("http://141.212.110.118:21006")
     
     
     # example without memory map
@@ -103,37 +103,37 @@ if __name__ == "__main__":
         },
     ] # "{\"Your belief of the world\": {\"<agent0>\": \"Agent0 at (1, 3), facing down, carrying key\", \"<agent1>\": \"Unseen\"}, \"action\": \"right\"}"
     
-    # example with memory map
-    width, height = 10, 10
-    windown_size = 12 # Fixed
-    system_prompt = system_prompt_zeroth_belief.replace("WIDTH", str(width)).replace("HEIGHT", str(height)).replace("WINSIZE", str(windown_size))
+    # # example with memory map
+    # width, height = 10, 10
+    # windown_size = 12 # Fixed
+    # system_prompt = system_prompt_zeroth_belief.replace("WIDTH", str(width)).replace("HEIGHT", str(height)).replace("WINSIZE", str(windown_size))
 
-    messages = [
-        {
-            "role": "system",
-            "content": system_prompt
-        },
-        {
-            "role": "user",
-            "content": "Step 10\nYou are agent1 at [7, 2]\nTask: explore the room\nPossible actions: left, right, forward\n\nMemory map before this step:\n<X> <X> <X> <X> <X> <X> <W> <W> <W> <X>\n<X> <X> <X> <X> <X> <X> <_> <_> <_> <X>\n<X> <X> <X> <X> <X> <X> <_> <agent1> <_> <X>\n<X> <X> <X> <X> <X> <X> <_> <_> <_> <X>\n<X> <X> <X> <X> <_> <_> <_> <_> <_> <X>\n<X> <X> <X> <_> <_> <_> <_> <_> <_> <W>\n<X> <X> <X> <_> <_> <_> <_> <_> <_> <W>\n<X> <X> <X> <_> <_> <_> <_> <_> <_> <W>\n<X> <X> <X> <X> <_> <_> <_> <X> <X> <X>\n<X> <X> <X> <X> <X> <X> <X> <X> <X> <X>\n\nDescription for object and agent states in memory map:\n<agent1>: agent1 facing up\n\nCurrent observed 3x3 grid:\n<W> <W> <W>\n<_> <_> <_>\n<_> <agent1> <_>\n\nDescription for object and agent states in local 3x3 grid:\n<agent1>: agent1 facing up",
-        },
-        {
-            "role": "assistant",
-            "content": "{\"Your belief of the world\": {\"<agent0>\": \"Unseen\", \"<agent1>\": \"Agent1 at (7, 2), facing up\"}, \"action\": \"left\"}"
-        },
-        {
-            "role": "user",
-            "content": "Step 11\nYou are agent1 at [7, 2]\nTask: explore the room\nPossible actions: left, right, forward\n\nCurrent observed 3x3 grid:\n<_> <_> <_>\n<_> <_> <agent1>\n<_> <_> <_>\n\nDescription for object and agent states in local 3x3 grid:\n<agent1>: agent1 facing left",
-        },
-        {
-            "role": "assistant",
-            "content": "{\"Your belief of the world\": {\"<agent0>\": \"Unseen\", \"<agent1>\": \"Agent1 at (7, 2), facing left\"}, \"action\": \"forward\"}"
-        },
-        {
-            "role": "user",
-            "content": "Step 12\nYou are agent1 at [6, 2]\nTask: explore the room\nPossible actions: left, right, forward\n\nCurrent observed 3x3 grid:\n<_> <_> <_>\n<_> <_> <agent1>\n<_> <_> <_>\n\nDescription for object and agent states in local 3x3 grid:\n<agent1>: agent1 facing left",
-        }
-    ] # "{\"Your belief of the world\": {\"<agent0>\": \"Unseen\", \"<agent1>\": \"Agent1 at (6, 2), facing left\"}, \"action\": \"forward\"}"
+    # messages = [
+    #     {
+    #         "role": "system",
+    #         "content": system_prompt
+    #     },
+    #     {
+    #         "role": "user",
+    #         "content": "Step 10\nYou are agent1 at [7, 2]\nTask: explore the room\nPossible actions: left, right, forward\n\nMemory map before this step:\n<X> <X> <X> <X> <X> <X> <W> <W> <W> <X>\n<X> <X> <X> <X> <X> <X> <_> <_> <_> <X>\n<X> <X> <X> <X> <X> <X> <_> <agent1> <_> <X>\n<X> <X> <X> <X> <X> <X> <_> <_> <_> <X>\n<X> <X> <X> <X> <_> <_> <_> <_> <_> <X>\n<X> <X> <X> <_> <_> <_> <_> <_> <_> <W>\n<X> <X> <X> <_> <_> <_> <_> <_> <_> <W>\n<X> <X> <X> <_> <_> <_> <_> <_> <_> <W>\n<X> <X> <X> <X> <_> <_> <_> <X> <X> <X>\n<X> <X> <X> <X> <X> <X> <X> <X> <X> <X>\n\nDescription for object and agent states in memory map:\n<agent1>: agent1 facing up\n\nCurrent observed 3x3 grid:\n<W> <W> <W>\n<_> <_> <_>\n<_> <agent1> <_>\n\nDescription for object and agent states in local 3x3 grid:\n<agent1>: agent1 facing up",
+    #     },
+    #     {
+    #         "role": "assistant",
+    #         "content": "{\"Your belief of the world\": {\"<agent0>\": \"Unseen\", \"<agent1>\": \"Agent1 at (7, 2), facing up\"}, \"action\": \"left\"}"
+    #     },
+    #     {
+    #         "role": "user",
+    #         "content": "Step 11\nYou are agent1 at [7, 2]\nTask: explore the room\nPossible actions: left, right, forward\n\nCurrent observed 3x3 grid:\n<_> <_> <_>\n<_> <_> <agent1>\n<_> <_> <_>\n\nDescription for object and agent states in local 3x3 grid:\n<agent1>: agent1 facing left",
+    #     },
+    #     {
+    #         "role": "assistant",
+    #         "content": "{\"Your belief of the world\": {\"<agent0>\": \"Unseen\", \"<agent1>\": \"Agent1 at (7, 2), facing left\"}, \"action\": \"forward\"}"
+    #     },
+    #     {
+    #         "role": "user",
+    #         "content": "Step 12\nYou are agent1 at [6, 2]\nTask: explore the room\nPossible actions: left, right, forward\n\nCurrent observed 3x3 grid:\n<_> <_> <_>\n<_> <_> <agent1>\n<_> <_> <_>\n\nDescription for object and agent states in local 3x3 grid:\n<agent1>: agent1 facing left",
+    #     }
+    # ] # "{\"Your belief of the world\": {\"<agent0>\": \"Unseen\", \"<agent1>\": \"Agent1 at (6, 2), facing left\"}, \"action\": \"forward\"}"
     
     response = api.get_response(messages=messages)
     print(response)

@@ -24,6 +24,7 @@ from llava.utils import server_error_msg
 from transformers import TextIteratorStreamer
 from threading import Thread
 
+import time
 
 
 global_counter = 0
@@ -64,9 +65,9 @@ class ModelWorker:
             input_ids = tokenizer.apply_chat_template(prompt, return_tensors='pt', padding="longest", max_length=5120)
             
         
-        print(input_ids)
-        print(tokenizer.decode(input_ids[0])) # print the prompt
-        print(input_ids.shape)
+        # print(input_ids)
+        # print(tokenizer.decode(input_ids[0])) # print the prompt
+        # print(input_ids.shape)
         
         input_ids = input_ids.to(self.device)
         
@@ -79,6 +80,26 @@ class ModelWorker:
             tokenizer.convert_tokens_to_ids("<|eot_id|>")
         ]
 
+        # # no streaming
+        # tstart = time.time()
+        # with torch.no_grad():
+        #     outputs = model.generate(
+        #         inputs=input_ids,
+        #         do_sample=do_sample,
+        #         max_new_tokens=256,
+        #         temperature=temperature,
+        #         top_p=top_p,
+        #         use_cache=True,
+        #         eos_token_id=terminators,
+        #     )
+        # t = time.time() - tstart
+        # toal_toks = outputs[0].shape.numel()
+        # input_toks = input_ids[0].shape.numel()
+        # print(f"Time to generate: {t:.4f}s", "Tokens:", toal_toks, "Generated Tokens:", (toal_toks-input_toks))
+        # only return the generated text, ignore the input prompt
+        # new_text = tokenizer.decode(outputs[0][input_ids.shape[1]:], skip_special_tokens=True)
+        # print("Generated text:", new_text)
+        # yield json.dumps({"text": new_text, "error_code": 0}).encode() + b"\0"
 
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
 
