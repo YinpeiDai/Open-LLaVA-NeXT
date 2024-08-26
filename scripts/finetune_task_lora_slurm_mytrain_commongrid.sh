@@ -15,7 +15,7 @@
 
 source /home/daiyp/.bashrc # change your own path
 cd /home/daiyp/Commongrid/Open-LLaVA-NeXT # change your own path
-micromamba activate llava  # change your own env
+micromamba activate commongrid  # change your own env
 module load cuda/12.1.1
 
 export GPUS_PER_NODE=2
