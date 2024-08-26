@@ -6,7 +6,7 @@
 # download open-llava-next submodule for llama/llava training 
 git submodule update --init --recursive
 
-# install
+# install (`module load cuda/12.1.1` if you install on GreatLakes)
 cd Open-LLaVA-NeXT
 pip install -e ".[train]"
 pip install flash-attn --no-build-isolation
