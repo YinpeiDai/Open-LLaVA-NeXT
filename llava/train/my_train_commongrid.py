@@ -22,130 +22,24 @@ from llava.train.train import (
     ModelArguments, TrainingArguments, get_peft_state_maybe_zero_3,
     get_peft_state_non_lora_maybe_zero_3,
     find_all_linear_names, safe_save_model_for_hf_trainer, DataCollatorForSupervisedDataset,
-    format_bytes, preprocess_llama3
+    format_bytes, preprocess_llama3 # type: ignore
 )
 
 from llava.conversation import Conversation, SeparatorStyle
-
-
-system_prompt_no_belief = """This is a WIDTHxHEIGHT 2D grid world where two agents collaboratively accomplish tasks. You are one of the agent. 
-We use the following symbols to represent the cell:
-{
-    '<_>': 'empty cell',
-    '<W>': 'wall cell',
-    '<X>': 'unseen cell'
-}
-All possible actions you may take:
-1. forward/left/right: move the agent in the corresponding direction.
-2. pick: pick up the object in the front cell. Agent can carry at most one object at a time.
-3. open: open the object. Some objects need to be opened with a key.
-4. exchange: exchange the object with the other agent, only is valid when the agent is facing to the other agent and synchronously choose to exchange.
-5. share [x, y]: share the information of grid at column x, row y to your partner. x,y are 0-based global coordinates, increasing from left to right, from top to bottom.
-6. request action <action>: request your partner to perform action <action>.
-
-You will be specified with either agent0 or agent1 and given:
-1. The task description.
-2. A 3x3 local grid observed by the specified agent.
-3. Possible actions that you can take. You can only perform actions included in the possible actions list.
-4. Description for objects and agent states when they are observed.
-5. When the step number > WINSIZE, a memory map that accumulates all your 3x3 local observations in the history and the description for object and agent states in memory map are given. The map is represented by the cell symbols.
-6. Your partner's message in last round (if any).
-7. Environment feedback on your last action (if any).
-
-Then you need to take actions to accomplish the task with another agent together. The complete map is not given to you, you should infer from the input information. But you may be given a memory map that records your previous exploration history. You should generate an action for the current step in this following dictionary format:
-{
-	"action": <action>
-}
-
-Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right."""
-
-
-system_prompt_zeroth_belief = """This is a WIDTHxHEIGHT 2D grid world where two agents collaboratively accomplish tasks. You are one of the agent. 
-We use the following symbols to represent the cell:
-{
-    '<_>': 'empty cell',
-    '<W>': 'wall cell',
-    '<X>': 'unseen cell'
-}
-All possible actions you may take:
-1. forward/left/right: move the agent in the corresponding direction.
-2. pick: pick up the object in the front cell. Agent can carry at most one object at a time.
-3. open: open the object. Some objects need to be opened with a key.
-4. exchange: exchange the object with the other agent, only is valid when the agent is facing to the other agent and synchronously choose to exchange.
-5. share [x, y]: share the information of grid at column x, row y to your partner. x,y are 0-based global coordinates, increasing from left to right, from top to bottom.
-6. request action <action>: request your partner to perform action <action>.
-
-You will be specified with either agent0 or agent1 and given:
-1. The task description.
-2. A 3x3 local grid observed by the specified agent.
-3. Possible actions that you can take. You can only perform actions included in the possible actions list.
-4. Description for objects and agent states when they are observed.
-5. When the step number > WINSIZE, a memory map that accumulates all your 3x3 local observations in the history and the description for object and agent states in memory map are given. The map is represented by the cell symbols.
-6. Your partner's message in last round (if any).
-7. Environment feedback on your last action (if any).
-8. Important objects to keep track of their states.
-
-Then you need to take actions to accomplish the task with another agent together. The complete map is not given to you, you should infer from the input information. But you may be given a memory map that records your previous exploration history. You should keep track of the states of important objects and generate an action for the current step in this following dictionary format:
-{
-    "Your belief of the world": {
-        "<important object0>": "state of <important object0>",
-        "<important object1>": "state of <important object1>"
-    },
-    "action": "<action>"
-}
-Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right."""
-
-
-system_prompt_zeroth_and_first_belief = """This is a WIDTHxHEIGHT 2D grid world where two agents collaboratively accomplish tasks. You are one of the agent. 
-We use the following symbols to represent the cell:
-{
-    '<_>': 'empty cell',
-    '<W>': 'wall cell',
-    '<X>': 'unseen cell'
-}
-All possible actions you may take:
-1. forward/left/right: move the agent in the corresponding direction.
-2. pick: pick up the object in the front cell. Agent can carry at most one object at a time.
-3. open: open the object. Some objects need to be opened with a key.
-4. exchange: exchange the object with the other agent, only is valid when the agent is facing to the other agent and synchronously choose to exchange.
-5. share [x, y]: share the information of grid at column x, row y to your partner. x,y are 0-based global coordinates, increasing from left to right, from top to bottom.
-6. request action <action>: request your partner to perform action <action>.
-
-You will be specified with either agent0 or agent1 and given:
-1. The task description.
-2. A 3x3 local grid observed by the specified agent.
-3. Possible actions that you can take. You can only perform actions included in the possible actions list.
-4. Description for objects and agent states when they are observed.
-5. When the step number > WINSIZE, a memory map that accumulates all your 3x3 local observations in the history and the description for object and agent states in memory map are given. The map is represented by the cell symbols.
-6. Your partner's message in last round (if any).
-7. Environment feedback on your last action (if any).
-8. Important objects to keep track of their states.
-
-Then you need to take actions to accomplish the task with another agent together. The complete map is not given to you, you should infer from the input information. But you may be given a memory map that records your previous exploration history. You should keep track of the states of important objects, keep track of how you imagine that your partner will keep track of these important objects based on your observations and dialog history, and generate an action for the current step in this following dictionary format:
-{
-    "Your belief of the world": {
-        "<important object0>": "state of <important object0>",
-        "<important object1>": "state of <important object1>"
-    },
-    "Your belief of your partner's belief of the world": {
-        "<important object0>": "partner's imagination of state of <important object0>",
-        "<important object1>": "partner's imagination of state of <important object1>"
-    },
-    "action": "<action>"
-}
-Be careful about the movement and the orientation of the agent in the observed grid. For example, if the specific agent is facing down, the action 'forward' will move the agent to the cell below it, not the cell above it; if the agent is facing left, the action 'forward' will move the agent to the cell on its left, not the cell on its right."""
+from minigrid.utils.data_preprocess.finetuned_prompt import (
+    SYSTEM_PROMPT_NO_BELIEF, SYSTEM_PROMPT_ZEROTH_AND_FIRST_BELIEF, SYSTEM_PROMPT_ZEROTH_BELIEF)
 
 
 @dataclass
 class DataArguments:
     data_path: str = field(default=None,
-                           metadata={"help": "Path to the training data."})
+                           metadata={"help": "Path to the training data."}) # type: ignore
     lazy_preprocess: bool = False
     is_multimodal: bool = False
     image_folder: Optional[str] = field(default=None)
     image_aspect_ratio: str = 'square'
 
-    setting: str = "no_belief" # no_belief, zeroth_belief, zeroth_and_first_belief
+    setting: str = "none" # none, zeroth, first
 
 
 def rank0_print(*args):
@@ -156,7 +50,7 @@ def rank0_print(*args):
 def preprocess_llama3(
     sources,
     tokenizer: transformers.PreTrainedTokenizer,
-    setting: str = "no_belief",
+    setting: str = "none",
 ) -> Dict:
     IGNORE_INDEX = -100
 
@@ -164,19 +58,19 @@ def preprocess_llama3(
     conversations = []
     for i, source in enumerate(sources):
         info = source[0]["info"]
-        if setting == "no_belief":
-            system_prompt = system_prompt_no_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
-        elif setting == "zeroth_belief":
-            system_prompt = system_prompt_zeroth_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
-        elif setting == "zeroth_and_first_belief":
-            system_prompt = system_prompt_zeroth_and_first_belief.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
+        if setting == "none":
+            system_prompt = SYSTEM_PROMPT_NO_BELIEF.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
+        elif setting == "zeroth":
+            system_prompt = SYSTEM_PROMPT_ZEROTH_BELIEF.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
+        elif setting == "first":
+            system_prompt = SYSTEM_PROMPT_ZEROTH_AND_FIRST_BELIEF.replace("WIDTH", str(info["width"])).replace("HEIGHT", str(info["height"])).replace("WINSIZE", str(info["window_size"]))
         else:
             raise ValueError(f"Unknown setting: {setting}")
         
         conv = Conversation(
             system="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"+system_prompt,
             roles=("<|start_header_id|>user<|end_header_id|>\n\n",
-                "<|start_header_id|>assistant<|end_header_id|>\n\n"),
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"), # type: ignore
             version="llama3",
             messages=[],
             offset=0,
@@ -336,7 +230,7 @@ def train(attn_implementation=None):
     global local_rank
 
     parser = transformers.HfArgumentParser(
-        (ModelArguments, DataArguments, TrainingArguments))
+        (ModelArguments, DataArguments, TrainingArguments)) # type: ignore
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     local_rank = training_args.local_rank
     compute_dtype = (torch.float16 if training_args.fp16 else (
@@ -379,7 +273,7 @@ def train(attn_implementation=None):
     )
     model.config.use_cache = False
 
-    model.requires_grad_(False)
+    model.requires_grad_(False) # type: ignore
 
     if training_args.bits in [4, 8]:
         from peft import prepare_model_for_kbit_training
@@ -389,7 +283,7 @@ def train(attn_implementation=None):
             model, use_gradient_checkpointing=training_args.gradient_checkpointing)
 
     if training_args.gradient_checkpointing:
-        model.enable_input_require_grads()
+        model.enable_input_require_grads() # type: ignore
     
     if training_args.lora_enable:
         from peft import LoraConfig, get_peft_model
