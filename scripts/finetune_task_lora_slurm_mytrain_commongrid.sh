@@ -21,18 +21,16 @@ module load cuda/12.1.1
 export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
 export MASTER_PORT=9902
-export EPOCH=2
+export EPOCH=1
 
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
 
-export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64_${BELIEF_SETTING}_debug
+export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64_${BELIEF_SETTING}_debug # change the save path yourself
 export BELIEF_SETTING=none # none, zeroth, first
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
 export DATA_PATH=/home/daiyp/CommonGrid/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/llava_format_none_belief.json
-
-
 
 set -x
 

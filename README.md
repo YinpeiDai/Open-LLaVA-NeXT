@@ -63,6 +63,7 @@ remember set `module load cuda/12.1.1` inside the script
 cd Open-LLaVA-NeXT
 sbatch ./scripts/finetune_task_lora_slurm_mytrain_commongrid.sh
 ```
+You will see `logs` in the directory
 
 Notes:
 1. `per_device_train_batch_size` is better to set as 1, use `gradient_accumulation_steps` and multiple GPUs to enlarge the total batch size
