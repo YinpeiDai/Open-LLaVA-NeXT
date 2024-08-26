@@ -13,10 +13,10 @@
 #SBATCH --mail-user=daiyp@umich.edu
 #SBATCH --mail-type=BEGIN,END
 
-source /home/daiyp/.bashrc
-cd /home/daiyp/Open-LLaVA-NeXT
-source ./scripts/setup_greatlakes.bash
-
+source /home/daiyp/.bashrc # change your own path
+cd /home/daiyp/Commongrid/Open-LLaVA-NeXT # change your own path
+micromamba activate llava  # change your own env
+module load cuda/12.1.1
 
 export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)

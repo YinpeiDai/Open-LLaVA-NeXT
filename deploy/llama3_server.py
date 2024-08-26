@@ -148,7 +148,7 @@ app = FastAPI()
 
 
 def release_model_semaphore():
-    model_semaphore.release()
+    model_semaphore.release() # type: ignore
 
 @app.post("/worker_generate_stream")
 async def generate_stream(request: Request):

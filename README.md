@@ -1,8 +1,80 @@
 # Open-LLaVA-NeXT
 
-An open-source implementation of **LLaVA-NeXT** series for facilitating the large multi-modal model community.
+## New notes
+
+```
+# download open-llava-next submodule for llama/llava training 
+git submodule update --init --recursive
+
+# install
+cd Open-LLaVA-NeXT
+pip install -e ".[train]"
+pip install flash-attn --no-build-isolation
+pip install tensorboardX
+
+# check if llava-next is installed
+pip list | grep llava
+
+# check whether branch  is `commongrid`
+git branch
+
+# link data and checkpoint (you can choose your own path)
+ln -s /nfs/turbo/coe-chaijy-unreplicated/daiyp/llava_rvt_checkpoints checkpoints
+mkdir playground
+cd playground
+ln -s /nfs/turbo/coe-chaijy-unreplicated/roihn/commongrid commongrid
+```
+
+
+### Deploy
+
+For server code, refer to `CommonGrid/Open-LLaVA-NeXT/deploy/llama3_server.py`
+```
+cd Open-LLaVA-NeXT
+CUDA_VISIBLE_DEVICES=0 python deploy/llama3_server.py --model-path <lora_model_save_path> -model-base /nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF --model-name llama3_lora --port <port_num>
+```
+
+Current trained ckpts for <lora_model_save_path>:
+1. `/home/daiyp/CommonGrid/Open-LLaVA-NeXT/checkpoints/commongrid_llama3_ep2_bs64_no_belief` 
+2. `/home/daiyp/CommonGrid/Open-LLaVA-NeXT/checkpoints/commongrid_llama3_ep2_bs64_zeroth_belief`
+3. `/home/daiyp/CommonGrid/Open-LLaVA-NeXT/checkpoints/commongrid_llama3_ep2_bs64_zeroth_and_first_belief` 
+
+port number can be manually specified, ip can be seen with `hostname -I` (the first address)
+
+
+For client code, refer to `CommonGrid/Open-LLaVA-NeXT/deploy/llama3_client*.py`
+
+
+### Training
+#### Local debug with 1 GPU
+```
+cd Open-LLaVA-NeXT
+./scripts/finetune_task_lora_local_mytrain_commongrid.sh 
+```
+
+#### GreatLakes multi-GPU training
+remember set `module load cuda/12.1.1` inside the script
+```
+cd Open-LLaVA-NeXT
+sbatch ./scripts/finetune_task_lora_slurm_mytrain_commongrid.sh
+```
+
+Notes:
+1. `per_device_train_batch_size` is better to set as 1, use `gradient_accumulation_steps` and multiple GPUs to enlarge the total batch size
+2. Deepspeed zero2 is better then zero3 for current experiments
+
+
+
+
+
+
+
+
+
 
 ## 💡 Highlights
+
+An open-source implementation of **LLaVA-NeXT** series for facilitating the large multi-modal model community.
 
 - 🔥 All training data and checkpoints at each stage are open-sourced, friendly for research usage.
 - 🔥 Able to reproduce the results of **[LLaVA-NeXT](https://llava-vl.github.io/blog/2024-05-10-llava-next-stronger-llms/)**.

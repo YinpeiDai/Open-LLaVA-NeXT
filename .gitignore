@@ -1,8 +1,8 @@
 llava_next.egg-info/
 pretrained
 ref
-playground/
+*/playground/
 __pycache__/
-checkpoints/
+*/checkpoints/
 sandbox/
 augmented_data_heuristic/

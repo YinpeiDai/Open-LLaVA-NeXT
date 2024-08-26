@@ -85,7 +85,7 @@ class ModelWorker:
         top_p = float(params.get("top_p", 1.0))
         do_sample = False
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device) # type: ignore
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
 
         thread = Thread(target=model.generate, kwargs=dict(
@@ -134,7 +134,7 @@ app = FastAPI()
 
 
 def release_model_semaphore():
-    model_semaphore.release()
+    model_semaphore.release() # type: ignore
 
 @app.post("/worker_generate_stream")
 async def generate_stream(request: Request):

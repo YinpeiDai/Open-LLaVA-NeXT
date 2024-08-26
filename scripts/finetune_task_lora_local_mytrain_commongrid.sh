@@ -4,14 +4,13 @@ set -x
 # wandb login
 
 export GPUS_PER_NODE=1
-export CUDA_VISIBLE_DEVICES=1
-EPOCH=2
+export CUDA_VISIBLE_DEVICES=0
+EPOCH=2 # 1 or 2 is better, do not use large number
 
 SAVE_PATH=commongrid_llama3-8b-no-belief-debug
-# MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
 MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
-
-
+SETTING=no_belief
+DATA_PATH=/home/daiyp/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/samples/llava_format_${SETTING}.json
 
 torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr localhost --master_port 29504 \
     llava/train/my_train_commongrid.py \
@@ -19,7 +18,7 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llama3 \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/samples/llava_format_no_belief.json \
+    --data_path ${DATA_PATH} \
     --bf16 True \
     --group_by_modality_length True \
     --output_dir checkpoints/${SAVE_PATH} \
@@ -43,4 +42,4 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --lazy_preprocess True \
     --report_to tensorboard \
     --run_name ${SAVE_PATH} \
-    --setting no_belief
+    --setting ${SETTING}

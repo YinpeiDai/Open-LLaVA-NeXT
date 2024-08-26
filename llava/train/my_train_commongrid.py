@@ -248,10 +248,10 @@ def preprocess_llama3(
                     f" (ignored)"
                 )
     
-    with open("input_ids.txt", "w") as f:
-        f.write(str(input_ids.numpy().tolist()))
-    with open("targets.txt", "w") as f:
-        f.write(str(targets.numpy().tolist()))
+    # with open("input_ids.txt", "w") as f:
+    #     f.write(str(input_ids.numpy().tolist()))
+    # with open("targets.txt", "w") as f:
+    #     f.write(str(targets.numpy().tolist()))
 
     return dict(
         input_ids=input_ids,
