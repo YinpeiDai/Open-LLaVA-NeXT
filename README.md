@@ -19,9 +19,8 @@ pip list | grep llava
 git branch
 
 # link data and checkpoint (you can choose your own path)
-ln -s /nfs/turbo/coe-chaijy-unreplicated/daiyp/llava_rvt_checkpoints checkpoints
-mkdir playground
-cd playground
+ln -s /nfs/turbo/coe-chaijy-unreplicated/daiyp/llava_rvt_checkpoints/commongrid_ckpt checkpoints
+mkdir playground && cd playground
 ln -s /nfs/turbo/coe-chaijy-unreplicated/roihn/commongrid commongrid
 ```
 
@@ -45,7 +44,17 @@ port number can be manually specified, ip can be seen with `hostname -I` (the fi
 For client code, refer to `CommonGrid/Open-LLaVA-NeXT/deploy/llama3_client*.py`
 
 
+
+
 ### Training
+#### Cook Data into llava format
+
+```
+cd Open-LLaVA-NeXT
+python gather_commongrid_data.py
+```
+
+
 #### Local debug with 1 GPU
 ```
 cd Open-LLaVA-NeXT
