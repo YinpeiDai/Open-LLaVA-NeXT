@@ -14,21 +14,21 @@
 #SBATCH --mail-type=BEGIN,END
 
 source /home/daiyp/.bashrc # change your own path
-cd /home/daiyp/CommonGrid/Open-LLaVA-NeXT # change your own path
+cd /home/daiyp/Commongrid/Open-LLaVA-NeXT # change your own path
 micromamba activate llava  # change your own env
 module load cuda/12.1.1
 
 export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
 export MASTER_PORT=9902
-export EPOCH=1
+export EPOCH=2
 export BELIEF_SETTING=no_belief # no_belief, zeroth_belief, zeroth_and_first_belief
 
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
 
-export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64_${BELIEF_SETTING}_ddddebug
+export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64_${BELIEF_SETTING}_debug
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
 
 set -x
