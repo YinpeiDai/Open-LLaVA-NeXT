@@ -32,7 +32,7 @@ system_prompt = """You are a language model trained to identify the sentiment fo
 - negative: The review expresses a negative sentiment or criticism about the parking situation.
 - positive: The review expresses a positive sentiment or praise about the parking situation.
 - neutral: The review provides a factual or mixed description without strong positive or negative sentiment.
-- unrelated: The review is not related to parking or the given comment does not describe any attitude toward parking. If just asking for parking information, or describing personal experience about parkinng without attitudes, it should be labeled as unrelated.
+- unrelated: The review is not related to parking or the given comment does not describe any attitude toward parking. If just asking for parking information, or describing personal experience about parkinng, it should be labeled as unrelated.
 
 Note that even the review contains positive or negative words, if it is not related to parking, it should be labeled as unrelated.
 For each input, respond with the label that best describes the sentiment or relevance of the review."""
