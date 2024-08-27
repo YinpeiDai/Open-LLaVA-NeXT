@@ -16,7 +16,7 @@ for line in lines:
     # Create the "human" part
     human_part = {"from": "human", "value": text}    
     # Create the "gpt" part with the label
-    gpt_part = {"from": "gpt", "value": f"Label: {label}"}
+    gpt_part = {"from": "gpt", "value": f"Label: {label}."}
     
     llava_format.append(
         {"id": uuid.uuid4().hex,
