@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#SBATCH --job-name=commongrid_llama3    # name
+#SBATCH --job-name=accessibility_llama3    # name
 #SBATCH --account=chaijy2
 #SBATCH --partition=spgpu
 #SBATCH --nodes=2                    # nodes
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-#SBATCH --cpus-per-task=8            # number of cores per tasks
+#SBATCH --cpus-per-task=4            # number of cores per tasks
 #SBATCH --gres=gpu:2                 # number of gpus
 #SBATCH --mem-per-gpu=40G       
 #SBATCH --time=5-00:00:00              # maximum execution time (HH:MM:SS)
@@ -37,13 +37,14 @@ echo "MASTER_ADDR="$MASTER_ADDR
 #  32    8         2        32
 #  32    8         1        32
 
+# remember to change job name
 export LORA_R=32
+export EPOCH=1
+export ACCU=16
+bs=$((ACCU * 4))
 export LORA_ALPHA=$((LORA_R / 4))
 echo "LORA_R="$LORA_R
 echo "LORA_ALPHA="$LORA_ALPHA
-export EPOCH=2
-export ACCU=8
-bs=$((ACCU * 4))
 export SAVE_PATH=commongrid_llama3-8b-accessibility-lora${LORA_R}_ep${EPOCH}_bs${bs}
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
 
