@@ -71,8 +71,18 @@ Notes:
 
 ### Evaluation
 
-####
+#### Local debug with 1 GPU
+```
+cd ArCHer
+sbatch ./scripts/eval_llama3_localmodel.py
+```
+#### GreatLakes 
 
+```
+cd ArCHer
+sbatch ./scripts/eval_llama3_localmodel_slurm.sh
+```
+`logs` is under the `ArCHer` dir
 
 
 
