@@ -20,7 +20,6 @@ source ./scripts/setup_greatlakes.bash
 
 export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
-export MASTER_PORT=9902
 
 
 echo "MASTER_ADDR="$MASTER_ADDR
@@ -38,14 +37,14 @@ echo "MASTER_ADDR="$MASTER_ADDR
 #  32    8         1        32
 
 # remember to change job name
+export MASTER_PORT=9902
 export LORA_R=32
-export EPOCH=1
+export LORA_ALPHA=8
+export EPOCH=2
 export ACCU=16
 bs=$((ACCU * 4))
-export LORA_ALPHA=$((LORA_R / 4))
-echo "LORA_R="$LORA_R
-echo "LORA_ALPHA="$LORA_ALPHA
-export SAVE_PATH=accessibility_llama3-8b-accessibility-lora${LORA_R}_ep${EPOCH}_bs${bs}
+export SAVE_PATH=accessibility_llama3-8b-accessibility-lora${LORA_R}_alpha${LORA_ALPHA}_ep${EPOCH}_bs${bs}
+echo "SAVE_PATH="$SAVE_PATH
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
 export DATA_PATH=/home/daiyp/Open-LLaVA-NeXT/playground/accessibility_data/sample_train_llava_format.json
 

@@ -34,7 +34,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-name", type=str, default=None)
-    parser.add_argument("--files", type=str, nargs="+", default=[])
+    parser.add_argument("--test-files", type=str, nargs="+", default=[])
     args = parser.parse_args()
-    predict(model_name=args.model_name, files=args.files)
+    predict(model_name=args.model_name, files=args.test_files)
     
