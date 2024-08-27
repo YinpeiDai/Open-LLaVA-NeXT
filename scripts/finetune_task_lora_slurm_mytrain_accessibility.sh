@@ -45,8 +45,9 @@ bs=$((ACCU * 4))
 export LORA_ALPHA=$((LORA_R / 4))
 echo "LORA_R="$LORA_R
 echo "LORA_ALPHA="$LORA_ALPHA
-export SAVE_PATH=commongrid_llama3-8b-accessibility-lora${LORA_R}_ep${EPOCH}_bs${bs}
+export SAVE_PATH=accessibility_llama3-8b-accessibility-lora${LORA_R}_ep${EPOCH}_bs${bs}
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
+export DATA_PATH=/home/daiyp/Open-LLaVA-NeXT/playground/accessibility_data/sample_train_llava_format.json
 
 set -x
 
@@ -58,7 +59,7 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
     --version llama3 \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/accessibility_data/sample_train_llava_format.json \
+    --data_path $DATA_PATH \
     --bf16 True \
     --group_by_modality_length True \
     --output_dir checkpoints/${SAVE_PATH} \

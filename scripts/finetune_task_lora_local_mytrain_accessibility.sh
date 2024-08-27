@@ -7,7 +7,7 @@ export GPUS_PER_NODE=1
 export CUDA_VISIBLE_DEVICES=1
 EPOCH=2
 
-SAVE_PATH=commongrid_llama3-8b-accessibility-debug
+SAVE_PATH=accessibility_llama3-8b-debug
 MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
 
 
