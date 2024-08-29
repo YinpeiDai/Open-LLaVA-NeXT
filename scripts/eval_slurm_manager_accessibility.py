@@ -19,7 +19,7 @@ class SlurmManager:
         parser.add_argument("--partition", type=str, default="spgpu")
         parser.add_argument("--nodes", type=int, help="if hetero setting, set as -1", default=1)
         parser.add_argument("--ntasks-per-node", type=int, default=1)
-        parser.add_argument("--cpus-per-task", type=int, default=2)
+        parser.add_argument("--cpus-per-task", type=int, default=1)
         parser.add_argument("--gres", type=str, default="gpu:1")
         parser.add_argument("--mem-per-gpu", type=str, default="20G")
                 
@@ -29,6 +29,7 @@ class SlurmManager:
         parser.add_argument("--mail-type", type=str, default="BEGIN,END")
 
         parser.add_argument("--test-file", type=str, required=True)
+        parser.add_argument("--key", type=str, default="text")
         
         return parser
         
@@ -58,7 +59,7 @@ source ./scripts/setup_greatlakes.bash
 
 export MODEL_NAME={self.args.job_name}
 export TEST_FILE={self.args.test_file}
-srun --jobid $SLURM_JOBID bash -c 'python scripts/evaluate_accessibility.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/$MODEL_NAME --test-files $TEST_FILE --dirname /home/daiyp/Open-LLaVA-NeXT/playground/accessibility_data; python scripts/metric_accessibility.py --model-name $MODEL_NAME --test-files $TEST_FILE'
+srun --jobid $SLURM_JOBID bash -c 'python scripts/evaluate_accessibility.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/accessibility/$MODEL_NAME --test-files $TEST_FILE --dirname /home/daiyp/Open-LLaVA-NeXT/playground/accessibility_data; python scripts/metric_accessibility.py --model-name $MODEL_NAME --test-files $TEST_FILE' --key {self.args.key}
 """
         self.script = script
     

@@ -23,7 +23,7 @@ class SlurmManager:
         parser.add_argument("--gres", type=str, default="gpu:2")
         parser.add_argument("--mem-per-gpu", type=str, default="20G")
                 
-        parser.add_argument("--time", type=str, default="01:00:00")
+        parser.add_argument("--time", type=str, default="00:20:00")
         parser.add_argument("--output", type=str, default=f"logs/%x-%j.log")
         parser.add_argument("--mail-user", type=str, default="daiyp@umich.edu")
         parser.add_argument("--mail-type", type=str, default="BEGIN,END")
@@ -33,6 +33,8 @@ class SlurmManager:
         parser.add_argument("--lora-alpha", type=int, default=8)
         parser.add_argument("--epoch", type=int, default=1)
         parser.add_argument("--batch-size", type=int, default=64)
+        parser.add_argument("--lr", type=float, default=1e-5)
+        parser.add_argument("--data-path", type=str, default="/nfs/turbo/coe-chaijy-unreplicated/llama3-8b-accessibility")
         
         return parser
         
@@ -68,10 +70,11 @@ export LORA_ALPHA={self.args.lora_alpha}
 export EPOCH={self.args.epoch}
 export ACCU={self.args.batch_size//4}
 export bs={self.args.batch_size}
-export SAVE_PATH=debug-accessibility_llama3-8b-accessibility-lora$LORA_R_alpha$LORA_ALPHA_ep$EPOCH_bs$bs
+export LR={self.args.lr}
+export SAVE_PATH={self.args.job_name}
 echo "SAVE_PATH="$SAVE_PATH
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
-export DATA_PATH=/home/daiyp/Open-LLaVA-NeXT/playground/accessibility_data/sample_train_llava_format.json
+export DATA_PATH={self.args.data_path}
 
 srun --jobid $SLURM_JOBID bash -c 'torchrun \
 --nproc_per_node $GPUS_PER_NODE --nnodes $SLURM_NNODES --node_rank $SLURM_PROCID \
@@ -84,7 +87,7 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --data_path $DATA_PATH \
     --bf16 True \
     --group_by_modality_length True \
-    --output_dir /home/daiyp/Open-LLaVA-NeXT/checkpoints/$SAVE_PATH \
+    --output_dir /home/daiyp/Open-LLaVA-NeXT/checkpoints/accessibility/$SAVE_PATH \
     --num_train_epochs $EPOCH \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
@@ -93,7 +96,7 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --save_strategy "no" \
     --save_steps 1e5 \
     --save_total_limit 1 \
-    --learning_rate 2e-5 \
+    --learning_rate $LR \
     --weight_decay 0. \
     --warmup_ratio 0.08 \
     --lr_scheduler_type "cosine" \

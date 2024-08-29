@@ -17,7 +17,7 @@ def predict(model_name, files):
         with open(f"{dirname}/{file}.jsonl", 'r') as infile:
             lines = infile.readlines()
         
-        y_test = [json.loads(line.strip())["label"] for line in lines]
+        y_test = [json.loads(line.strip())["annotation"] for line in lines]
 
         with open(f"{dirname}/{file}-predict-{model_name}.jsonl", 'r') as infile:
             predict_lines = infile.readlines()

@@ -91,6 +91,7 @@ class ModelWorker:
             if s in ["positive", "negative", "neutral", "unrelated"]:
                 return s
         logging.info(f"Failed to extract label from response: {response}")
+        print(f"Failed to extract label from response: {response}")
         return random.choice(LABELS[:2])
 
 
@@ -103,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--dirname", type=str, default="playground/accessibility_data")
     parser.add_argument("--test-files", type=str, nargs="+", default=[])
+    parser.add_argument("--key", type=str, default="text")
     args = parser.parse_args()
 
 
@@ -123,7 +125,7 @@ if __name__ == "__main__":
 
         for line in tqdm(lines):
             data = json.loads(line.strip())
-            text = data["text"]
+            text = data[args.key]
             messages = [
                 {
                     "role": "system",
@@ -137,6 +139,7 @@ if __name__ == "__main__":
             label = model_worker.generate({"messages": messages})
             result = {"text": text, "label": label}
             logging.info(f"result: {result}")
+            print(f"result: {result}")
             outputs.append(result)
         
         model_str = args.model_path.split("/")[-1]
