@@ -74,6 +74,7 @@ class ModelWorker:
                 eos_token_id=terminators,
             )
         new_text = tokenizer.decode(outputs[0][input_ids.shape[1]:], skip_special_tokens=True)
+        # print(f"raw text: {new_text}")
         logging.info(f"raw text: {new_text}")
         return self.post_process(new_text)
     
@@ -139,7 +140,6 @@ if __name__ == "__main__":
             label = model_worker.generate({"messages": messages})
             result = {"text": text, "label": label}
             logging.info(f"result: {result}")
-            print(f"result: {result}")
             outputs.append(result)
         
         model_str = args.model_path.split("/")[-1]
@@ -149,7 +149,4 @@ if __name__ == "__main__":
                 json.dump(output, outfile)
                 outfile.write("\n")
         logging.info(f"Saved to {output_file}")
-    
-    #  CUDA_VISIBLE_DEVICES=1 python scripts/evaluate_accessibility.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/accessibility_llama3-8b-accessibility-lora32_alpha8_ep3_bs64 --test-files sample_test_aaaa sample_test_bbbb sample_test_cccc
-
 

@@ -11,7 +11,8 @@ def predict(model_name, files):
 
     total_y_test = []
     total_y_pred = []
-
+    print(f"Model: {model_name}")
+    print(f"Files: {files}")
 
     for file in files:
         with open(f"{dirname}/{file}.jsonl", 'r') as infile:
