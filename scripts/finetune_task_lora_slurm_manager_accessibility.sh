@@ -1,12 +1,12 @@
 # change DATA_PATH
 # login3
 
-port=10202
+port=10001
 
-for LORA_R in 8 16 32
+for LORA_R in 32
 do
     LORA_ALPHA=$((LORA_R/2))
-    for EPOCH in 3 4 5
+    for EPOCH in 5
     do
         for bs in 64
         do

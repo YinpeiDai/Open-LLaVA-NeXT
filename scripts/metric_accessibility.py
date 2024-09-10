@@ -1,7 +1,7 @@
 import json
 from sklearn.metrics import classification_report, accuracy_score
 
-dirname = "playground/accessibility_data"
+dirname = "playground/accessibility_data/test_eval"
 
 def predict(model_name, files):
     # files = ["sample_test_aaaa"]

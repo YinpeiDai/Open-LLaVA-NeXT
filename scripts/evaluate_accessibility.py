@@ -33,9 +33,9 @@ class ModelWorker:
         self.device = device
         self.model.eval()
         self.model.tie_weights()
-        if os.path.exists(f"{model_path}/eval.log"):
-            os.remove(f"{model_path}/eval.log")
-        logging.basicConfig(filename=f"{model_path}/eval.log", level=logging.INFO)
+        # if os.path.exists(f"{model_path}/eval.log"):
+        #     os.remove(f"{model_path}/eval.log")
+        # logging.basicConfig(filename=f"{model_path}/eval.log", level=logging.INFO)
 
         
     @torch.inference_mode()
@@ -74,8 +74,8 @@ class ModelWorker:
                 eos_token_id=terminators,
             )
         new_text = tokenizer.decode(outputs[0][input_ids.shape[1]:], skip_special_tokens=True)
-        # print(f"raw text: {new_text}")
-        logging.info(f"raw text: {new_text}")
+        print(f"raw text: {new_text}")
+        # logging.info(f"raw text: {new_text}")
         return self.post_process(new_text)
     
     def post_process(self, response):
@@ -115,9 +115,9 @@ if __name__ == "__main__":
         model_base=args.model_base,
         device=args.device,
     )
-    logging.info(args.test_files)
+    print(args.test_files)
     for test_file in args.test_files:
-        logging.info(f"Processing {test_file}")
+        print(f"Processing {test_file}")
         outputs = []
         with open(f"{args.dirname}/{test_file}.jsonl", 'r') as infile:
             lines = infile.readlines()
@@ -139,14 +139,14 @@ if __name__ == "__main__":
             ]
             label = model_worker.generate({"messages": messages})
             result = {"text": text, "label": label}
-            logging.info(f"result: {result}")
+            print(f"result: {result}")
             outputs.append(result)
         
         model_str = args.model_path.split("/")[-1]
-        output_file = f"{args.dirname}/{test_file}-predict-{model_str}.jsonl" 
+        output_file = f"{args.dirname}/{test_file}-prediction.jsonl" 
         with open(output_file, 'w') as outfile:
             for output in outputs:
                 json.dump(output, outfile)
                 outfile.write("\n")
-        logging.info(f"Saved to {output_file}")
+        print(f"Saved to {output_file}")
 

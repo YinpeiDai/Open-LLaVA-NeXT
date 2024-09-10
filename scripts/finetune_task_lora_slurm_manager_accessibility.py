@@ -23,7 +23,7 @@ class SlurmManager:
         parser.add_argument("--gres", type=str, default="gpu:2")
         parser.add_argument("--mem-per-gpu", type=str, default="20G")
                 
-        parser.add_argument("--time", type=str, default="00:20:00")
+        parser.add_argument("--time", type=str, default="01:00:00")
         parser.add_argument("--output", type=str, default=f"logs/%x-%j.log")
         parser.add_argument("--mail-user", type=str, default="daiyp@umich.edu")
         parser.add_argument("--mail-type", type=str, default="BEGIN,END")

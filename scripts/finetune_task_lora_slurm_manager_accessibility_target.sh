@@ -12,7 +12,7 @@ do
         do
             for lr in 1e-5 2e-5 3e-5
             do
-                MODEL_NAME=target_accessibility_llama3-8b-lora${LORA_R}_alpha${LORA_ALPHA}_ep${EPOCH}_bs${bs}_lr${lr}
+                MODEL_NAME=new-target_accessibility_llama3-8b-lora${LORA_R}_alpha${LORA_ALPHA}_ep${EPOCH}_bs${bs}_lr${lr}
                 python scripts/finetune_task_lora_slurm_manager_accessibility.py --job-name ${MODEL_NAME} --port ${port} --lora-r ${LORA_R} --lora-alpha ${LORA_ALPHA} --epoch ${EPOCH} --batch-size ${bs} --lr ${lr} --data-path /home/daiyp/Open-LLaVA-NeXT/playground/accessibility_data/target_train_llava_format.json
                 port=$((port+1))
                 # check if the file exists, if not then sleep 10 seconds
