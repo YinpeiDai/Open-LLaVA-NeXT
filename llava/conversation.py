@@ -380,11 +380,11 @@ conv_llava_llama_3 = Conversation(
     sep="<|eot_id|>",
 )
 
-conv_llava_llama_3_rvt = Conversation(
+conv_llava_llama_3_racer = Conversation(
     system="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful language and vision assistant that can understand the visual content of how a robot arm is interacting with objects in the environment. Your role is to decompose the given task goal into subgoals as instructions to guide the robot arm and to complete the task step by step. You are able to understand whether the current robot arm has successfully followed the previous instruction or not. You can detect if the robot has failed to complete the last instruction and provide a new corrective instruction to recover from the failure. Once the robot completes each subgoal, you can provide the next instruction to guide the robot to the next subgoal, until the end of the task. If the robot encounters a catastrophic failure, you should call human for help.",
     roles=("<|start_header_id|>user<|end_header_id|>\n\n",
            "<|start_header_id|>assistant<|end_header_id|>\n\n"),
-    version="llama3_rvt",
+    version="llama3_racer",
     messages=[],
     offset=0,
     sep_style=SeparatorStyle.MPT,
@@ -392,7 +392,7 @@ conv_llava_llama_3_rvt = Conversation(
 )
 
 #### TODO: (Jayjun) make system prompt for each task 
-#### e.g., conv_llava_llama_3_rvt_close_jar
+#### e.g., conv_llava_llama_3_racer_close_jar
 
 default_conversation = conv_vicuna_v1
 conv_templates = {
@@ -414,10 +414,7 @@ conv_templates = {
     "llava_llama_2": conv_llava_llama_2,
     "llava_llama_3": conv_llava_llama_3,
     
-    "llava_llama_3_rvt": conv_llava_llama_3_rvt,
-    # TODO Append each task system prompt here
-    # e.g., "llava_llama3_rvt_close_jar": conv_llava_llama_3_rvt_close_jar
-
+    "llava_llama_3_racer": conv_llava_llama_3_racer,
     "mpt": conv_mpt,
 }
 

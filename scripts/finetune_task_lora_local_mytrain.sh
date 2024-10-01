@@ -1,15 +1,12 @@
 #!/bin/bash
 set -x
 
-# wandb login
-
 export GPUS_PER_NODE=2
 export CUDA_VISIBLE_DEVICES=0,1
 EPOCH=2
 
-SAVE_PATH=llava_llama3_rvt_alltask_lora_debug
-# MODEL_PATH=/data/daiyp/foundation_models/llama3-llava-next-8b
-MODEL_PATH=/scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b
+SAVE_PATH=llava_llama3_racer_alltask_lora_debug
+MODEL_PATH=<path_to_downloaded_llama3-llava-next-8b>
 
 
 
@@ -18,8 +15,8 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $MODEL_PATH \
-    --version llava_llama_3_rvt \
-    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/rvt_llava_data/all_tasks.json \
+    --version llava_llama_3_racer \
+    --data_path /home/daiyp/Open-LLaVA-NeXT/playground/racer_llava_data/all_tasks.json \
     --image_folder /home/daiyp/Open-LLaVA-NeXT \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
@@ -33,9 +30,9 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --bf16 True \
     --output_dir checkpoints/${SAVE_PATH} \
     --num_train_epochs $EPOCH \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 2 \
+    --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 1e5 \

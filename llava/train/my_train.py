@@ -1,5 +1,5 @@
 """
-Adapt llava training for rvt data training
+Adapt llava training for RACER training
 """
 
 import copy
@@ -81,7 +81,7 @@ def return_sentence(sentence, args):
             else:
                 return sentence["gpt_instruction_no_label"]
 
-def preprocess_llama3_rvt(
+def preprocess_llama3_racer(
     sources,
     args,
     tokenizer: transformers.PreTrainedTokenizer,
@@ -89,10 +89,10 @@ def preprocess_llama3_rvt(
     task_name: Optional[str] = None
 ) -> Dict:
     if task_name is None:
-        assert conversation_lib.default_conversation.version == "llama3_rvt"
+        assert conversation_lib.default_conversation.version == "llama3_racer"
     else:
         assert task_name in RLBENCH_TASKS
-        assert conversation_lib.default_conversation.version == f"llama3_rvt_{task_name}"
+        assert conversation_lib.default_conversation.version == f"llama3_racer_{task_name}"
     conv = conversation_lib.default_conversation.copy()        
     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
 
@@ -267,7 +267,7 @@ class MyLazySupervisedDataset(Dataset):
                 self.data_args)
         else:
             sources = copy.deepcopy([e["conversations"] for e in sources])
-        data_dict = preprocess_llama3_rvt(
+        data_dict = preprocess_llama3_racer(
             sources,
             self.data_args,
             self.tokenizer,
