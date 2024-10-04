@@ -74,4 +74,4 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --lazy_preprocess True \
     --report_to tensorboard \
     --run_name ${SAVE_PATH} \
-    --predict_failure_label True'
+    --lang_level rich'

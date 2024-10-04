@@ -11,9 +11,7 @@ for task in RLBENCH_TASKS:
     task_data = []
     for d in ["train", "val"]:
         for ep in sorted(os.listdir(os.path.join(data_path,  d, task)), key=lambda x: int(x.split("_")[0])):
-            if task == "put_item_in_drawer" and "v2" in ep:
-                continue
-            file_path = os.path.join(data_path, d, task, ep, "llava_new.json")
+            file_path = os.path.join(data_path, d, task, ep, "llava.json")
             if not os.path.exists(file_path):
                 continue
             task_data.extend(json.load(open(file_path)))

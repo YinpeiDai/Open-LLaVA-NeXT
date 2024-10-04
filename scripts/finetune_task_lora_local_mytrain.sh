@@ -49,4 +49,4 @@ torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr 
     --lazy_preprocess True \
     --report_to tensorboard \
     --run_name ${SAVE_PATH} \
-    --predict_failure_label True
+    --lang_level rich

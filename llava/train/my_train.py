@@ -26,8 +26,7 @@ from llava.model import *
 from llava.train.llava_trainer import LLaVATrainer
 
 from peft.peft_model import PeftModel
-from llava.utils import RLBENCH_TASKS, TEMP_0_label, TEMP_0_nolabel, TEMP_label, TEMP_nolabel
-
+from llava.utils import RLBENCH_TASKS, TEMPLATE_first_step, TEMPLATE_other_step
 
 local_rank = None
 
@@ -45,41 +44,32 @@ def rank0_print(*args):
 
 @dataclass
 class MyDataArguments(DataArguments):
-    predict_failure_label: bool = field(
-        default=True, metadata={"help": "Predict the failure label."}
-    )
-    predict_heuristic: bool = field(
-        default=False, metadata={"help": "Predict the heuristic language."}
+    lang_level: str = field(
+        default="rich", metadata={"help": "rich or simple instruction"}
     )
     is_resume: bool = field(
         default=False, metadata={"help": "Resume from the checkpoint."}
     )
 
 
-
 def return_sentence(sentence, args):
     if sentence["from"] == "human":
         if "robot_delta_state" not in sentence: # first step
-            if args.predict_failure_label:
-                return TEMP_0_label.format(task_goal=sentence["task_goal"])
-            else:
-                return TEMP_0_nolabel.format(task_goal=sentence["task_goal"])
+            return TEMPLATE_first_step.format(task_goal=sentence["task_goal"])
         else:
-            if args.predict_failure_label:
-                return TEMP_label.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"], robot_delta_state=sentence["robot_delta_state"])
+            if args.lang_level == "rich":
+                return TEMPLATE_other_step.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_rich_instruction"], robot_delta_state=sentence["robot_delta_state"])
+            elif args.lang_level == "simple":
+                return TEMPLATE_other_step.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_simple_instruction"], robot_delta_state=sentence["robot_delta_state"])
             else:
-                return TEMP_nolabel.format(task_goal=sentence["task_goal"], previous_instruction=sentence["previous_instruction"], robot_delta_state=sentence["robot_delta_state"])
+                raise ValueError(f"Unsupported lang_level: {args.lang_level}")
     else:
-        if args.predict_failure_label:
-            if args.predict_heuristic:
-                return sentence["heuristic_instruction"]
-            else:
-                return sentence["gpt_instruction"]
+        if args.lang_level == "rich":
+            return sentence["rich_instruction"]
+        elif args.lang_level == "simple":
+            return sentence["simple_instruction"]
         else:
-            if args.predict_heuristic:
-                return sentence["heuristic_instruction_no_label"]
-            else:
-                return sentence["gpt_instruction_no_label"]
+            raise ValueError(f"Unsupported lang_level: {args.lang_level}")
 
 def preprocess_llama3_racer(
     sources,
@@ -111,7 +101,6 @@ def preprocess_llama3_racer(
         conversations.append(conv.get_prompt())
 
     # Tokenize conversations
-
     if has_image:
         input_ids = torch.stack(
             [tokenizer_image_token(prompt, tokenizer, return_tensors='pt') for prompt in conversations], dim=0)
@@ -208,9 +197,9 @@ class MyLazySupervisedDataset(Dataset):
     
     def get_len(self, item):
         length = len(item["conversations"][0]["task_goal"].split()) + \
-            len(item["conversations"][0]["previous_instruction"].split()) +\
+            len(item["conversations"][0]["previous_rich_instruction"].split()) +\
             len(item["conversations"][0]["robot_delta_state"].split()) if "robot_delta_state" in item["conversations"][0] else 0 + \
-            max(len(item["conversations"][1]["gpt_instruction"].split()), len(item["conversations"][1]["heuristic_instruction"].split())) 
+            max(len(item["conversations"][1]["rich_instruction"].split()), len(item["conversations"][1]["heuristic_instruction"].split())) 
         return length
 
     @property
@@ -286,34 +275,7 @@ class MyLazySupervisedDataset(Dataset):
             data_dict['image'] = torch.zeros(
                 3, crop_size['height'], crop_size['width'])
             data_dict['image_size'] = (crop_size['height'], crop_size['width'])
-        return data_dict  # final length is 2928 + len(input_ids) - 1
-
-
-
-class MyLLaVATrainer(LLaVATrainer):
-    
-    def _save_checkpoint(self, model, trial, metrics=None):
-        super(LLaVATrainer, self)._save_checkpoint(model, trial, metrics)
-        # if self.args.lora_enable:
-        #     state_dict = get_peft_state_maybe_zero_3(
-        #         model.named_parameters(), self.args.lora_bias
-        #     )
-        #     non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(
-        #         model.named_parameters()
-        #     )
-        #     outdir = os.path.join(self.args.output_dir, 'checkpoint-{}'.format(self.state.global_step), "lora_model_output")
-        #     os.makedirs(outdir, exist_ok=True)
-        #     if self.args.local_rank == 0 or self.args.local_rank == -1:
-        #         if isinstance(model.config, dict):
-        #             with open(os.path.join(outdir, 'config.json'), 'w') as f:
-        #                 json.dump(model.config, f)
-        #         else:
-        #             model.config.save_pretrained(outdir)
-        #         model.save_pretrained(
-        #             outdir, state_dict=state_dict)
-        #         torch.save(non_lora_state_dict, os.path.join(
-        #             outdir, 'non_lora_trainables.bin'))
-
+        return data_dict
 
 
 def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
@@ -450,7 +412,7 @@ def train(attn_implementation="flash_attention_2"):
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
-    trainer = MyLLaVATrainer(model=model,
+    trainer = LLaVATrainer(model=model,
                            tokenizer=tokenizer,
                            args=training_args,
                            **data_module)

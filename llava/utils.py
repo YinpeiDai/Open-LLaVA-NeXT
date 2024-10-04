@@ -147,7 +147,5 @@ RLBENCH_TASKS = [
     "stack_cups",
 ]
 
-TEMP_0_nolabel = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, what's the next instruction for the robot arm?"
-TEMP_nolabel = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". {robot_delta_state} Based on the visual observation and the context, what's the next instruction for the robot arm?"
-TEMP_0_label = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
-TEMP_label = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". {robot_delta_state} Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
+TEMPLATE_first_step = "<image>\nThe task goal is: {task_goal}. This is the first step and the robot is about to start the task. Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
+TEMPLATE_other_step = "<image>\nThe task goal is: {task_goal}. In the previous step, the robot arm was given the following instruction: \"{previous_instruction}\". {robot_delta_state} Based on the visual observation and the context, how does the robot fulfil that previous instruction and what's the next instruction for the robot arm?"
