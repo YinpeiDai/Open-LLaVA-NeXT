@@ -57,11 +57,14 @@ Download [llama3-llava-next-8b](https://huggingface.co/lmms-lab/llama3-llava-nex
 ### 5. Set up online service
 
 #### 5.1. Set up language encoder service (i.e., CLIP and T5 model) (Around 20GB in total)
-Download [T5-11b](https://huggingface.co/google-t5/t5-11b). Change the `MAIN_DIR` path in ` deploy/lm_server.py ` and run it. The [CLIP](https://github.com/openai/CLIP) model will be downloaded automatically.
+Download [T5-11b](https://huggingface.co/google-t5/t5-11b). Change the `MAIN_DIR` path in ` deploy/lm_server.py ` and run it. 
+
+Install CLIP `pip install git+https://github.com/openai/CLIP.git` and run
 
 ```
 CUDA_VISIBLE_DEVICES=0 python deploy/lm_server.py 
 ```
+The [CLIP](https://github.com/openai/CLIP) model will be downloaded automatically.
 
 When the server is running, you should get some messages like this
 ```
