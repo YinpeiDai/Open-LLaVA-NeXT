@@ -7,7 +7,7 @@ from transformers import AutoTokenizer, T5EncoderModel,  BartModel, RobertaModel
 from pydantic import BaseModel
 
 
-MAIN_DIR = "/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/"
+MAIN_DIR = "<your-dir-to-store-t5-11b>"
 MODEL_DICT = {
     "t5-11b": os.path.join(MAIN_DIR, "t5-11b"),
 }
