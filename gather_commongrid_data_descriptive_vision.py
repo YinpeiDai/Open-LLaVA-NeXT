@@ -63,7 +63,7 @@ def generate_data(
                     act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action)
                 
                 obs_dic["act_dic"] = act_dic # type: ignore
-                obs_dic["image"] = "sample.png" # TODO: change this to the actual image path later
+                obs_dic["image"] = dic["obs"]["img_path"]
                 dataset.append(obs_dic)
             
             
@@ -98,14 +98,14 @@ def generate_data(
         
 if __name__ == "__main__":
     window_size = 12
-    dirname = "/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/samples"
+    dirname = "/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT"
     for setting in ["none", "zeroth", "first"]:
         all_data = []
         for file in sorted(os.listdir(dirname)):
-            if file.endswith("3k_v1.json") and "llava" not in file and "multi_doors" in file:
+            if file.endswith("1k_v2.json") and "llava" not in file:
                 file_path = os.path.join(dirname, file)
                 print(file_path)
                 data = generate_data(file_path, setting=setting, success_agent_only=False, window_size=window_size)
                 all_data.extend(data)
-        with open(f"playground/llava_format_multi_doors_one_room_{setting}_belief_v1_vision.json", "w") as fb:
+        with open(f"playground/llava_format_sampledata_{setting}_belief_v2_vision.json", "w") as fb:
             json.dump(all_data, fb)
