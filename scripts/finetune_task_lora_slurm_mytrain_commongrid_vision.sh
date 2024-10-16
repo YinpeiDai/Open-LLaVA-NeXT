@@ -14,7 +14,7 @@
 #SBATCH --mail-type=BEGIN,END
 
 source /home/daiyp/.bashrc # change your own path
-cd /home/daiyp/Commongrid/Open-LLaVA-NeXT # change your own path
+cd /home/daiyp/Open-LLaVA-NeXT # change your own path
 micromamba activate commongrid  # change your own env
 module load cuda/12.1.1
 
@@ -30,7 +30,7 @@ echo "MASTER_ADDR="$MASTER_ADDR
 export SAVE_PATH=commongrid_llava_ep${EPOCH}_bs64_${BELIEF_SETTING}_vision # change the save path yourself
 export BELIEF_SETTING=none # none, zeroth, first
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
-export DATA_PATH=/home/daiyp/CommonGrid/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/llava_format_pick_two_balls_none_belief_v2_vision.json
+export DATA_PATH=/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/llava_format_pick_two_balls_none_belief_v2_vision.json
 
 set -x
 

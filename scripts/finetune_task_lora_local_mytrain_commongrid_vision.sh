@@ -10,7 +10,7 @@ EPOCH=1 # 1 or 2 is better, do not use large number
 SAVE_PATH=commongrid_llama3-8b-no-belief-debug
 MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
 SETTING=none # none, zeroth, first
-DATA_PATH=/home/daiyp/CommonGrid/Open-LLaVA-NeXT/playground/llava_format_sampledata_${SETTING}_belief_v2_vision.json
+DATA_PATH=/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/llava_format_pick_two_balls_none_belief_v2_vision.json
 
 torchrun --nnodes 1 --nproc_per_node $GPUS_PER_NODE --node_rank 0 --master_addr localhost --master_port 29504 \
     llava/train/my_train_commongrid_vision.py \
