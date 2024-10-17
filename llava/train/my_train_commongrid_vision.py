@@ -261,15 +261,8 @@ class MyLazySupervisedDataset(Dataset):
                              labels=data_dict["labels"][0])
 
         # image exist in the data
-        if 'image' in self.list_data_dict[i]:
-            data_dict['image'] = image
-            data_dict['image_size'] = image_size
-        elif self.data_args.is_multimodal:
-            # image does not exist in the data, but the model is multimodal
-            crop_size = self.data_args.image_processor.crop_size
-            data_dict['image'] = torch.zeros(
-                3, crop_size['height'], crop_size['width'])
-            data_dict['image_size'] = (crop_size['height'], crop_size['width'])
+        data_dict['image'] = image
+        data_dict['image_size'] = image_size
         return data_dict
 
 
