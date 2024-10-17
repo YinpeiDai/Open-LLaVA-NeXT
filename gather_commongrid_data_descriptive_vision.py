@@ -98,14 +98,15 @@ def generate_data(
         
 if __name__ == "__main__":
     window_size = 12
-    dirname = "/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT"
+    dirname = "/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/samples"
     for setting in ["none", "zeroth", "first"]:
         all_data = []
         for file in sorted(os.listdir(dirname)):
-            if file.endswith("1k_v2.json") and "llava" not in file:
+            if file.endswith("3k_v2.json") and "llava" not in file:
                 file_path = os.path.join(dirname, file)
                 print(file_path)
                 data = generate_data(file_path, setting=setting, success_agent_only=False, window_size=window_size)
                 all_data.extend(data)
+        # print(f"Number of data: {len(all_data)}")
         with open(f"playground/llava_format_sampledata_{setting}_belief_v2_vision.json", "w") as fb:
             json.dump(all_data, fb)
