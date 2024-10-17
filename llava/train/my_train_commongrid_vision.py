@@ -32,6 +32,7 @@ from minigrid.utils.data_preprocess.finetuned_prompt import (
     DESCRIPTIVE_SYSTEM_PROMPT_ZEROTH_AND_FIRST_BELIEF_VISION, 
     DESCRIPTIVE_SYSTEM_PROMPT_ZEROTH_BELIEF_VISION
 )
+from llava.constants import DEFAULT_IMAGE_TOKEN
 
 
 @dataclass
@@ -88,11 +89,16 @@ def preprocess_llama3_vision(
             source = source[1:]
 
         conv.messages = []
+        assert len(source) == 2
         for j, sentence in enumerate(source):
             role = roles[sentence["from"]]
             assert role == conv.roles[j % 2], f"{i}"
+            if role == conv.roles[0] and DEFAULT_IMAGE_TOKEN not in sentence["value"]:
+                sentence["value"] = DEFAULT_IMAGE_TOKEN + f"\n{sentence['value']}"
             conv.append_message(role, sentence["value"])
         conversations.append(conv.get_prompt())
+
+    
 
     # Tokenize conversations
     input_ids = torch.stack([tokenizer_image_token(prompt, tokenizer, return_tensors='pt') for prompt in conversations], dim=0)
@@ -140,11 +146,16 @@ def preprocess_llama3_vision(
                     f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
                     f" (ignored)"
                 )
-
+    # with open("conversations.txt", "w") as f:
+    #     f.write(str(conv.get_prompt()))
     # with open("input_ids.txt", "w") as f:
     #     f.write(str(input_ids.numpy().tolist()))
-    # with open("targets.txt", "w") as f:
-    #     f.write(str(targets.numpy().tolist()))
+    # with open("input_id2str.json", "w") as f:
+    #     input_ids_copy = input_ids[0].tolist()
+    #     idx = input_ids_copy.index(-200)
+    #     input_ids_copy[idx] = tokenizer.pad_token_id
+    #     dic = {"str": json.dumps(tokenizer.decode(input_ids_copy))}
+    #     json.dump(dic, f)
 
     return dict(
         input_ids=input_ids,
