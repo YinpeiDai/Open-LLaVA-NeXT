@@ -29,7 +29,7 @@ echo "MASTER_ADDR="$MASTER_ADDR
 
 export SAVE_PATH=commongrid_llava_ep${EPOCH}_bs64_${BELIEF_SETTING}_vision # change the save path yourself
 export BELIEF_SETTING=none # none, zeroth, first
-export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
+export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b/
 export DATA_PATH=/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/llava_format_pick_two_balls_none_belief_v2_vision.json
 
 set -x

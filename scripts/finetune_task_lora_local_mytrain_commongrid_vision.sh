@@ -8,7 +8,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 EPOCH=1 # 1 or 2 is better, do not use large number
 
 SAVE_PATH=commongrid_llama3-8b-no-belief-debug
-MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
+MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b/
 SETTING=none # none, zeroth, first
 DATA_PATH=/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/llava_format_pick_two_balls_none_belief_v2_vision.json
 
