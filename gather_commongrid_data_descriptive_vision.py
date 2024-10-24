@@ -63,7 +63,7 @@ def generate_data(
                     act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action)
                 
                 obs_dic["act_dic"] = act_dic # type: ignore
-                obs_dic["image"] = "sample.png" # TODO: change this to the actual image path later
+                obs_dic["image"] = data[f"agent{agent_id}"][step]["obs"]["img_path"]
                 dataset.append(obs_dic)
             
             
