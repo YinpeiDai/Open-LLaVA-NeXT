@@ -64,7 +64,7 @@ def generate_data(
                 
                 obs_dic["act_dic"] = act_dic # type: ignore
                 obs_dic["image"] = data[f"agent{agent_id}"][step]["obs"]["img_path"]
-                dataset.append(obs_dic)
+
             
             
             for d in dataset:
@@ -102,10 +102,11 @@ if __name__ == "__main__":
     for setting in ["none", "zeroth", "first"]:
         all_data = []
         for file in sorted(os.listdir(dirname)):
-            if file.endswith("3k_v1.json") and "llava" not in file and "multi_doors" in file:
+            if file.endswith("3k_v2.json") and "llava" not in file:
                 file_path = os.path.join(dirname, file)
                 print(file_path)
                 data = generate_data(file_path, setting=setting, success_agent_only=False, window_size=window_size)
                 all_data.extend(data)
-        with open(f"playground/llava_format_multi_doors_one_room_{setting}_belief_v1_vision.json", "w") as fb:
+        # print(f"Number of data: {len(all_data)}")
+        with open(f"playground/llava_format_sampledata_{setting}_belief_v2_vision.json", "w") as fb:
             json.dump(all_data, fb)

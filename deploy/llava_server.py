@@ -158,11 +158,11 @@ async def test():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default="127.0.0.1")
+    parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int, default=21002)
     parser.add_argument("--model-path", type=str, default="/data/daiyp/foundation_models/llama3-llava-next-8b")
     parser.add_argument("--model-base", type=str, default=None)
-    parser.add_argument("--model-name", type=str, default="llava_llama3")
+    parser.add_argument("--model-name", type=str, default="llava_llama3_lora")
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
     args = parser.parse_args()
@@ -174,9 +174,4 @@ if __name__ == "__main__":
         device=args.device)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
 
-    # python deploy/llava_server.py --model-path <lora_model_save_path> --model-base <llama3-llava-next-8b-path> --model-name llava_llama3_lora
-    # then run llava_api in rvt folder
-
-    # CUDA_VISIBLE_DEVICES=1 python deploy/llava_server.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/llava_llama3_rvt_lora_alltask_ep2_bs64  --model-base /scratch/chaijy_root/chaijy2/daiyp/llama3-llava-next-8b --model-name llava_llama3_lora
-
-    # CUDA_VISIBLE_DEVICES=1 python deploy/llava_server.py --model-path /home/daiyp/Open-LLaVA-NeXT/checkpoints/commongrid_llama3_lora_ep2_bs64 --model-base /nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF --model-name llama3_lora
+    # CUDA_VISIBLE_DEVICES=1  python deploy/llava_server.py  --model-base  /nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/llama3-llava-next-8b/  --model-path /nfs/turbo/coe-chaijy-unreplicated/daiyp/llava_rvt_checkpoints/commongrid_ckpt/commongrid_llava_ep2_bs64_zeroth_vision
