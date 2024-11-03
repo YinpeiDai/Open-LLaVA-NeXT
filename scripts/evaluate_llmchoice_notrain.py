@@ -1,4 +1,5 @@
 
+# transformers              4.37.2
 import argparse
 import json
 import os
@@ -20,12 +21,11 @@ class ModelWorker:
         logname="eval.log"
     ):
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
-        self.model = AutoModelForCausalLM.from_pretrained(model_base)
-        self.model.to(torch.float16)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_base)
+        self.model = AutoModelForCausalLM.from_pretrained(model_base, device_map="balanced", torch_dtype=torch.float16, low_cpu_mem_usage=True)
 
-        # put on device
-        self.model.to(device)
+        # # put on device
+        # self.model.to(device)
         
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
@@ -52,7 +52,7 @@ class ModelWorker:
         
         input_ids = input_ids.to(self.device)
         
-        temperature = float(params.get("temperature", 1.0))
+        temperature = float(params.get("temperature", 0.7))
         top_p = float(params.get("top_p", 1.0))
         do_sample = False
         
@@ -81,6 +81,7 @@ class ModelWorker:
         text = text.strip()
         try:
             dic = json.loads(text)
+            logging.info(f"Postprocessing: {dic}")
             return dic
         except Exception as e:
             logging.error(f"Error in postprocessing: {e}")
@@ -93,8 +94,8 @@ class ModelWorker:
        
 if __name__ == "__main__":
     # model_name = "Llama-3.1-8B-Instruct"
-    model_name = "Meta-Llama-3-8B-Instruct-HF"
-    model_id = "Llama3-8B"
+    model_name = "Llama-3.1-70B-Instruct"
+    model_id = "Llama3.1-70B"
     model_worker = ModelWorker(
         model_base = f"/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/{model_name}",
         device="cuda",
