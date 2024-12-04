@@ -21,6 +21,7 @@ def generate_data(
     all_data = []
     with open(file_path, "r") as fb:
         raw_data = json.load(fb)
+        print(f"raw_data from {file_path} size:", len(raw_data))
     for idx, data in enumerate(raw_data):
         if not data["terminated"]: continue
         if success_agent_only:
@@ -52,15 +53,17 @@ def generate_data(
             for step, dic in enumerate(data["agent" + str(agent_id)]):
                 obs_dic = dict2str_obs_descriptive(dic["obs"], agent_id, step, belief_mode=setting)
                 if agent_id == 0:
-                    opponent_next_action = "unknown"
-                    if step != len(data["agent1"]) - 1:
-                        opponent_next_action = data["agent1"][step]["action"] if data["agent0"][step]["obs"]["opponent_next_action_predictable"] else "unknown"
-                    act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action)
+                    # opponent_next_action = "unknown"
+                    # if step != len(data["agent1"]) - 1:
+                    #     opponent_next_action = data["agent1"][step]["action"] if data["agent0"][step]["obs"]["opponent_next_action_predictable"] else "unknown"
+                    opponent_next_action = data["agent1"][step]["action"]
+                    act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action, is_oracle=True)
                 else:
-                    opponent_next_action = "unknown"
-                    if step != len(data["agent0"]) - 1:
-                        opponent_next_action = data["agent0"][step]["action"] if data["agent1"][step]["obs"]["opponent_next_action_predictable"] else "unknown"
-                    act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action)
+                    # opponent_next_action = "unknown"
+                    # if step != len(data["agent0"]) - 1:
+                    #     opponent_next_action = data["agent0"][step]["action"] if data["agent1"][step]["obs"]["opponent_next_action_predictable"] else "unknown"
+                    opponent_next_action = data["agent0"][step]["action"]
+                    act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action, is_oracle=True)
                 
                 obs_dic["act_dic"] = act_dic # type: ignore
                 dataset.append(obs_dic)
@@ -128,22 +131,16 @@ def generate_data(
         
 if __name__ == "__main__":
     window_size = 12
-    dirname = "/nfs/turbo/coe-chaijy-unreplicated/roihn/commongrid/dataset/SFT/"
+    dirname = "/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/"
     for setting in ["none", "zeroth", "first"]:
         all_data = []
         for file in sorted(os.listdir(dirname)):
-            if file.endswith("5k_v2.json") and "llava" not in file and "pick_and_open" in file:
+            if file.endswith("3k_v1.json") and "llava" not in file and "oracle_pick_and_open" in file:
                 file_path = os.path.join(dirname, file)
                 print(file_path)
                 data = generate_data(file_path, setting=setting, success_agent_only=False, window_size=window_size)
                 all_data.extend(data)
-        lst = [0.25, 0.5, 0.75]
-        # randomize the data
-        import random
-        random.seed(42)
-        random.shuffle(all_data)
-        for ratio in lst:
-            with open(f"/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/llava_format_pickandopen_{setting}_belief_v2_{ratio}.json", "w") as fb:
-                json.dump(all_data[:int(len(all_data)*ratio)], fb)
-                print(f"len(all_data): {len(all_data)}, len(all_data)*{ratio}: {int(len(all_data)*ratio)}")
+    
+        with open(f"/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/oracle_llava_format_pickandopen_{setting}_belief_v1.json", "w") as fb:
+            json.dump(all_data, fb, indent=4)
 

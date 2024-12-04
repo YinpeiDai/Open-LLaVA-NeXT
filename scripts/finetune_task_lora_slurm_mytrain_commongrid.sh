@@ -1,36 +1,41 @@
 #!/bin/bash
 
-#SBATCH --job-name=commongrid_llama3    # name
+#SBATCH --job-name=commongrid_llama3_first    # name
 #SBATCH --account=chaijy2
 #SBATCH --partition=spgpu
 #SBATCH --nodes=4                    # nodes
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --cpus-per-task=8            # number of cores per tasks
 #SBATCH --gres=gpu:2                 # number of gpus
-#SBATCH --mem-per-gpu=40G       
-#SBATCH --time=5-00:00:00              # maximum execution time (HH:MM:SS)
+#SBATCH --mem-per-gpu=20G       
+#SBATCH --time=1-00:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.log      # output file name
-#SBATCH --mail-user=daiyp@umich.edu
+#SBATCH --mail-user=roihn@umich.edu
 #SBATCH --mail-type=BEGIN,END
 
-source /home/daiyp/.bashrc # change your own path
-cd /home/daiyp/Commongrid/Open-LLaVA-NeXT # change your own path
-micromamba activate commongrid  # change your own env
+source /home/roihn/.bashrc
+cd /gpfs/accounts/chaijy_root/chaijy2/roihn/CommonGrid/Open-LLaVA-NeXT # change your own path
+# micromamba activate commongrid  # change your own env
+# module load python3.10-anaconda
+# source activate base
+conda activate /home/roihn/miniconda3/envs/grid
 module load cuda/12.1.1
 
 export GPUS_PER_NODE=2
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
-export MASTER_PORT=9902
+export MASTER_PORT=9904
 export EPOCH=1
 
 
 echo "MASTER_ADDR="$MASTER_ADDR
 /bin/hostname
 
-export SAVE_PATH=commongrid_llama3_ep${EPOCH}_bs64_${BELIEF_SETTING}_debug # change the save path yourself
-export BELIEF_SETTING=none # none, zeroth, first
+export BELIEF_SETTING=first # none, zeroth, first
+# export DATA_RATIO=0.25
+export SAVE_PATH=commongrid_llama3_ep1_bs64_oracle_${BELIEF_SETTING}_pickandopen_${DATA_RATIO}_debug_v1 # change the save path yourself
 export MODEL_PATH=/nfs/turbo/coe-chaijy-unreplicated/pre-trained-weights/Meta-Llama-3-8B-Instruct-HF
-export DATA_PATH=/home/daiyp/CommonGrid/Open-LLaVA-NeXT/playground/commongrid/dataset/SFT/meta/llava_format_none_belief.json
+export DATA_PATH=playground_replicated/dataset/SFT/oracle_llava_format_pickandopen_${BELIEF_SETTING}_belief_v1.json
+# export DATA_PATH=playground_replicated/dataset/SFT/llava_format_pickandopen_${BELIEF_SETTING}_belief_v2_${DATA_RATIO}.json
 
 set -x
 
@@ -45,7 +50,7 @@ srun --jobid $SLURM_JOBID bash -c 'torchrun \
     --data_path ${DATA_PATH} \
     --bf16 True \
     --group_by_modality_length True \
-    --output_dir checkpoints/${SAVE_PATH} \
+    --output_dir mycheckpoints_replicated/${SAVE_PATH} \
     --num_train_epochs $EPOCH \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
