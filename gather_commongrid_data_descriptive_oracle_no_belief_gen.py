@@ -4,7 +4,7 @@ import json
 import os
 import uuid
 
-from minigrid.utils.data_preprocess.finetuned_prompt import (
+from minigrid.utils.data_preprocess.finetuned_prompt_no_belief_gen import (
     DESCRIPTIVE_SYSTEM_PROMPT_NO_BELIEF, 
     DESCRIPTIVE_SYSTEM_PROMPT_ZEROTH_BELIEF, 
     DESCRIPTIVE_SYSTEM_PROMPT_ZEROTH_AND_FIRST_BELIEF,
@@ -57,13 +57,13 @@ def generate_data(
                     # if step != len(data["agent1"]) - 1:
                     #     opponent_next_action = data["agent1"][step]["action"] if data["agent0"][step]["obs"]["opponent_next_action_predictable"] else "unknown"
                     opponent_next_action = data["agent1"][step]["action"]
-                    act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action, is_oracle=True)
+                    act_dic = dict2str_action(dic["action"])
                 else:
                     # opponent_next_action = "unknown"
                     # if step != len(data["agent0"]) - 1:
                     #     opponent_next_action = data["agent0"][step]["action"] if data["agent1"][step]["obs"]["opponent_next_action_predictable"] else "unknown"
                     opponent_next_action = data["agent0"][step]["action"]
-                    act_dic = dict2str_action(dic["action"], dic["obs"], setting, opponent_next_action, is_oracle=True)
+                    act_dic = dict2str_action(dic["action"])
                 
                 obs_dic["act_dic"] = act_dic # type: ignore
                 dataset.append(obs_dic)
@@ -135,12 +135,12 @@ if __name__ == "__main__":
     for setting in ["none", "zeroth", "first"]:
         all_data = []
         for file in sorted(os.listdir(dirname)):
-            if file.endswith("6k_v1.json") and "llava" not in file and "oracle_pick_and_open" in file:
+            if file.endswith("3k_v1.json") and "llava" not in file and "oracle_pick_and_open" in file:
                 file_path = os.path.join(dirname, file)
                 print(file_path)
                 data = generate_data(file_path, setting=setting, success_agent_only=False, window_size=window_size)
                 all_data.extend(data)
     
-        with open(f"/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/oracle_llava_format_pickandopen_{setting}_6k_belief_v1.json", "w") as fb:
+        with open(f"/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/SFT/oracle_llava_format_pickandopen_{setting}_belief_v1_no_belief_gen.json", "w") as fb:
             json.dump(all_data, fb, indent=4)
 
