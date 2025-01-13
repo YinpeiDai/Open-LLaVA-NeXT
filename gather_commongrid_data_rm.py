@@ -110,12 +110,7 @@ def generate_data(
                     stacked_history=history_context
                 )
                 # print(system_prompt)
-                dialog.append(
-                    {
-                        "from": "system",
-                        "value": system_prompt
-                    }
-                )
+                # system prompt is appended during the training
                 dialog.append(
                     {
                         "from": "human",
