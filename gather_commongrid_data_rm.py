@@ -22,8 +22,11 @@ def generate_data(
     all_data = []
     with open(file_path, "r") as fb:
         raw_data = json.load(fb)
+    length_sum = 0
+    good_num = 0
+    bad_num = 0
     for idx, data in enumerate(raw_data):
-        if not data["terminated"]: continue
+        # if not data["terminated"]: continue
         if success_agent_only:
             success_agent = data["success_agent"]
             if success_agent in ["agent0", 0]:
@@ -44,10 +47,14 @@ def generate_data(
             elif setting == "zeroth":
                 system_prompt = SYSTEM_PROMPT_ZEROTH_BELIEF.replace("WIDTH", str(width)).replace("HEIGHT", str(height)).replace("WINSIZE", str(window_size))
             elif setting == "first":
-                system_prompt = SYSTEM_PROMPT_ZEROTH_AND_FIRST_BELIEF.replace("WIDTH", str(width)).replace("HEIGHT", str(height)).replace("WINSIZE", str(window_size))
+                system_prompt = SYSTEM_PROMPT_FIRST_BELIEF.replace("WIDTH", str(width)).replace("HEIGHT", str(height)).replace("WINSIZE", str(window_size))
             system_prompt = system_prompt.strip()
             # print(system_prompt)
 
+        
+        # print("length of one episode:", len(data["agent0"]))
+        length_sum += len(data["agent0"])
+        
         for agent_id in agents:
             dataset = []
             for step, dic in enumerate(data["agent" + str(agent_id)]):
@@ -64,13 +71,17 @@ def generate_data(
                 
                 obs_dic = dict2str_obs_action(dic["obs"], agent_id, act_dic, step)
                 # act_dic should be good/bad
-                act_dic = "<judgement>" + "GOOD" if data["agent0"]["reward"] == "1" else "BAD" + "</judgement>"
+                act_dic = "<judgement>" + ("GOOD" if float(dic["obs"]["reward"]) >= 0 else "BAD") + "</judgement>"
+                if act_dic == "<judgement>BAD</judgement>":
+                    bad_num += 1
+                else:
+                    good_num += 1
                 obs_dic["act_dic"] = act_dic # type: ignore
-                obs_dic["task_desc"] = dic["task_desc"]
-                obs_dic['possible_actions'] = dic['possible_actions']
+                obs_dic["task_desc"] = dic["obs"]["task_desc"]
+                obs_dic['possible_actions'] = dic["obs"]['possible_actions']
                 obs_dic['possible_objects'] = ""
                 if setting != "none":
-                    obs_dic["possible_objects"] = dic["zeroth_belief"].keys()
+                    obs_dic["possible_objects"] = dic["obs"]["zeroth_belief"].keys()
                     obs_dic["possible_objects"] = "Objects to track:" + ",".join(obs_dic["possible_objects"]) + "\n"
 
                 dataset.append(obs_dic)
@@ -98,7 +109,7 @@ def generate_data(
                     possible_objects=d["possible_objects"],
                     stacked_history=history_context
                 )
-
+                # print(system_prompt)
                 dialog.append(
                     {
                         "from": "system",
@@ -128,6 +139,10 @@ def generate_data(
                         "conversations": deepcopy(dialog)
                     }
                 )
+    
+    print("sum of length:", length_sum)
+    print("good_num:", good_num)
+    print("bad_num:", bad_num)
     return all_data
                 
         
@@ -135,11 +150,14 @@ if __name__ == "__main__":
     window_size = 12
     dirname = "/nfs/turbo/coe-chaijy/roihn/commongrid/dataset/RM/"
     for setting in ["none", "zeroth", "first"]:
+    # for setting in ["none"]:
         all_data = []
         for file in sorted(os.listdir(dirname)):
-            if file.endswith(".json") and "llava" not in file:
+            if file.endswith("41.json") and "llava" not in file:
                 file_path = os.path.join(dirname, file)
                 data = generate_data(file_path, setting=setting, success_agent_only=False, window_size=window_size)
                 all_data.extend(data)
-        with open(f"{dirname}/llava_format_{setting}_belief.json", "w") as fb:
+        with open(f"{dirname}/llava_format_{setting}_belief_v2_41.json", "w") as fb:
             json.dump(all_data, fb)
+        
+
